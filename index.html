@@ -41,46 +41,54 @@
 
     <!-- Navigation par Onglets -->
     <nav class="grid grid-cols-3 gap-1 bg-slate-800 p-1.5 rounded-xl border border-slate-700 text-xs font-semibold text-center">
-      <button onclick="showTab('borne')" id="nav-borne" class="py-2.5 rounded-lg text-slate-400 hover:text-white">
-        📲 Pointage (Borne)
+      <button onclick="showTab('borne')" id="nav-borne" class="py-2.5 rounded-lg bg-blue-600 text-white shadow">
+        📲 Pointage & Scan
       </button>
       <button onclick="showTab('parent')" id="nav-parent" class="py-2.5 rounded-lg text-slate-400 hover:text-white">
-        👨‍👩‍👧 Espace Parents
+        👨‍👩‍👧 Recherche
       </button>
-      <button onclick="showTab('admin')" id="nav-admin" class="py-2.5 rounded-lg bg-blue-600 text-white shadow">
-        🔒 Admin (1 Téléphone)
+      <button onclick="showTab('admin')" id="nav-admin" class="py-2.5 rounded-lg text-slate-400 hover:text-white">
+        🔒 Admin (Inscrire)
       </button>
     </nav>
 
-    <!-- SECTION 1 : BORNE DE POINTAGE (SCANNER) -->
-    <section id="tab-borne" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-5 hidden">
+    <!-- SECTION 1 : BORNE DE POINTAGE & SCAN D'EMPREINTE -->
+    <section id="tab-borne" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-5">
       <div class="text-center">
-        <h2 class="text-lg font-bold text-emerald-400">Pointez votre présence</h2>
-        <p class="text-xs text-slate-400 mt-1">Validez votre empreinte biométrique ou FaceID.</p>
+        <h2 class="text-lg font-bold text-emerald-400">Borne & Identification</h2>
+        <p class="text-xs text-slate-400 mt-1">Pointez l'arrivée/sortie ou identifiez un élève par empreinte.</p>
       </div>
 
       <div class="space-y-3">
-        <button onclick="processScan('ENTREE')" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg text-base flex justify-center items-center gap-2">
-          🟢 Pointer mon ENTREE
+        <!-- Bouton pour Identifier directement par Empreinte -->
+        <button onclick="identifyByBiometrics()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg text-sm flex justify-center items-center gap-2 border border-indigo-400">
+          🔍 Scanner l'empreinte pour voir l'élève
         </button>
 
-        <button onclick="processScan('SORTIE')" class="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg text-base flex justify-center items-center gap-2">
-          🔴 Pointer ma SORTIE
-        </button>
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button onclick="processScan('ENTREE')" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg text-sm flex justify-center items-center gap-1">
+            🟢 Pointer ENTRÉE
+          </button>
+
+          <button onclick="processScan('SORTIE')" class="py-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg text-sm flex justify-center items-center gap-1">
+            🔴 Pointer SORTIE
+          </button>
+        </div>
       </div>
 
-      <!-- Résultat du Scan -->
-      <div id="scan-result" class="hidden p-4 rounded-xl text-center space-y-1">
+      <!-- Résultat du Scan / Fiche de l'Élève -->
+      <div id="scan-result" class="hidden p-4 rounded-xl text-center space-y-2">
         <div id="scan-title" class="font-extrabold text-lg"></div>
         <div id="scan-message" class="text-sm"></div>
+        <div id="scan-history" class="text-xs text-left pt-2 border-t border-slate-700 space-y-1"></div>
       </div>
     </section>
 
-    <!-- SECTION 2 : ESPACE PARENTS (RECHERCHE) -->
+    <!-- SECTION 2 : RECHERCHE PAR NOM (PARENTS / DISCIPLINE) -->
     <section id="tab-parent" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4 hidden">
       <div>
-        <h2 class="text-lg font-bold text-blue-400">Vérifier la présence d'un élève</h2>
-        <p class="text-xs text-slate-400 mt-1">Entrez le nom de l'élève pour voir son historique d'arrivée et de sortie.</p>
+        <h2 class="text-lg font-bold text-blue-400">Rechercher un élève par Nom</h2>
+        <p class="text-xs text-slate-400 mt-1">Entrez le nom pour consulter l'historique complet.</p>
       </div>
 
       <div class="flex gap-2">
@@ -93,13 +101,13 @@
       <div id="parent-results" class="space-y-3 pt-2"></div>
     </section>
 
-    <!-- SECTION 3 : ADMIN (UN SEUL TÉLÉPHONE) -->
-    <section id="tab-admin" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+    <!-- SECTION 3 : ADMIN (INSCRIPTION DE L'ÉLÈVE) -->
+    <section id="tab-admin" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4 hidden">
       
-      <!-- Connexion restreinte pour l'admin -->
+      <!-- Connexion Admin -->
       <div id="admin-login" class="space-y-3">
         <h2 class="text-lg font-bold text-slate-200">Accès Administrateur</h2>
-        <p class="text-xs text-slate-400">Seul l'appareil administrateur autorisé peut inscrire des élèves.</p>
+        <p class="text-xs text-slate-400">Seul votre téléphone autorisé peut enregistrer des élèves.</p>
         <input type="password" id="admin-pass" placeholder="Mot de passe admin" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
         <button onclick="loginAdmin()" class="w-full py-3 bg-blue-600 font-bold rounded-xl text-sm">Se connecter</button>
       </div>
@@ -108,7 +116,7 @@
       <div id="admin-form" class="hidden space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-bold text-emerald-400">Inscrire un Élève</h2>
-          <span class="text-xs bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full border border-emerald-700">Admin Déverrouillé</span>
+          <span class="text-xs bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full border border-emerald-700">Admin Actif</span>
         </div>
 
         <div>
@@ -122,7 +130,7 @@
         </div>
 
         <button onclick="registerStudentBiometrics()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded-xl text-sm shadow flex justify-center items-center gap-2">
-          🔐 Assigner l'empreinte & Enregistrer
+          🔐 Placer l'empreinte & Enregistrer
         </button>
 
         <div id="admin-status" class="text-xs text-center font-medium mt-2"></div>
@@ -132,9 +140,8 @@
   </div>
 
   <script>
-    const ADMIN_PASSWORD = "admin1234"; // Mot de passe admin
+    const ADMIN_PASSWORD = "admin1234";
 
-    // Utilitaire pour nettoyer les chaînes de caractères pour Firebase (Évite l'erreur des slashes /)
     function sanitizeFirebaseId(rawId) {
       return rawId.replace(/\//g, "_").replace(/\+/g, "-").replace(/=/g, "");
     }
@@ -159,7 +166,7 @@
       }
     }
 
-    // ENREGISTREMENT DE L'ÉLÈVE
+    // 1. ENREGISTREMENT ET REDIRECTION VERS L'ACCUEIL
     async function registerStudentBiometrics() {
       const name = document.getElementById('student-name').value.trim();
       const studentClass = document.getElementById('student-class').value.trim();
@@ -171,7 +178,7 @@
       }
 
       status.className = "text-xs text-center text-blue-400";
-      status.innerText = "Demande d'empreinte en cours sur votre appareil...";
+      status.innerText = "Posez votre doigt sur le capteur d'empreinte...";
 
       try {
         const challenge = new Uint8Array(32);
@@ -192,7 +199,6 @@
           }
         });
 
-        // Conversion et nettoyage de la clé biométrique
         const rawIdBase64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
         const cleanDocId = sanitizeFirebaseId(rawIdBase64);
 
@@ -205,9 +211,16 @@
         });
 
         status.className = "text-xs text-center text-emerald-400 font-bold";
-        status.innerText = "✅ Élève enregistré avec succès dans la base de données !";
+        status.innerText = "✅ Élève enregistré ! Redirection vers l'accueil...";
+        
         document.getElementById('student-name').value = '';
         document.getElementById('student-class').value = '';
+
+        // Redirection vers l'accueil après 1.5 seconde
+        setTimeout(() => {
+          showTab('borne');
+          status.innerText = '';
+        }, 1500);
 
       } catch (err) {
         console.error(err);
@@ -216,13 +229,15 @@
       }
     }
 
-    // POINTAGE PAR SCAN
-    async function processScan(type) {
+    // 2. IDENTIFICATION DIRECTE PAR EMPREINTE
+    async function identifyByBiometrics() {
       const resultDiv = document.getElementById('scan-result');
       const titleDiv = document.getElementById('scan-title');
       const msgDiv = document.getElementById('scan-message');
+      const historyDiv = document.getElementById('scan-history');
 
       resultDiv.classList.add('hidden');
+      historyDiv.innerHTML = '';
 
       try {
         const challenge = new Uint8Array(32);
@@ -239,7 +254,76 @@
         const rawIdBase64 = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
         const cleanDocId = sanitizeFirebaseId(rawIdBase64);
 
-        // Recherche de l'élève dans Firebase
+        const { doc, getDoc, collection, getDocs } = window.fs;
+        const studentDoc = await getDoc(doc(window.db, "students", cleanDocId));
+
+        if (studentDoc.exists()) {
+          const student = studentDoc.data();
+          
+          resultDiv.className = "p-4 rounded-xl text-center space-y-2 bg-indigo-950 text-indigo-200 border border-indigo-700";
+          titleDiv.innerText = "👤 ÉLÈVE IDENTIFIÉ";
+          msgDiv.innerHTML = `<div class="text-base font-bold">${student.name}</div><div class="text-xs text-indigo-300">Classe : ${student.class}</div>`;
+
+          // Récupération de l'historique de cet élève
+          const attendancesSnap = await getDocs(collection(window.db, "attendances"));
+          let historyHtml = '<p class="font-bold text-indigo-300 mb-1">Dernières présences :</p>';
+          let found = false;
+
+          attendancesSnap.forEach(d => {
+            const att = d.data();
+            if (att.studentId === cleanDocId) {
+              found = true;
+              const dateObj = new Date(att.timestamp);
+              const timeStr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+              const dateStr = dateObj.toLocaleDateString('fr-FR');
+              historyHtml += `<div class="flex justify-between py-0.5 border-b border-indigo-900/50"><span>${att.type} (${dateStr})</span><b>${timeStr}</b></div>`;
+            }
+          });
+
+          if (!found) historyHtml += '<p class="text-slate-400">Aucun pointage récent.</p>';
+          historyDiv.innerHTML = historyHtml;
+
+        } else {
+          resultDiv.className = "p-4 rounded-xl text-center space-y-1 bg-red-950 text-red-300 border border-red-700";
+          titleDiv.innerText = "❌ ÉLÈVE INCONNU";
+          msgDiv.innerText = "Aucun élève trouvé pour cette empreinte.";
+        }
+
+      } catch (err) {
+        console.error(err);
+        resultDiv.className = "p-4 rounded-xl text-center space-y-1 bg-slate-900 text-slate-300 border border-slate-700";
+        titleDiv.innerText = "⚠️ ÉCHEC DU SCAN";
+        msgDiv.innerText = "Empreinte non reconnue ou action annulée.";
+      }
+
+      resultDiv.classList.remove('hidden');
+    }
+
+    // 3. POINTAGE D'ENTRÉE / SORTIE
+    async function processScan(type) {
+      const resultDiv = document.getElementById('scan-result');
+      const titleDiv = document.getElementById('scan-title');
+      const msgDiv = document.getElementById('scan-message');
+      const historyDiv = document.getElementById('scan-history');
+
+      resultDiv.classList.add('hidden');
+      historyDiv.innerHTML = '';
+
+      try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge: challenge,
+            timeout: 60000,
+            userVerification: "required"
+          }
+        });
+
+        const rawIdBase64 = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+        const cleanDocId = sanitizeFirebaseId(rawIdBase64);
+
         const { doc, getDoc, collection, addDoc } = window.fs;
         const studentDoc = await getDoc(doc(window.db, "students", cleanDocId));
 
@@ -261,32 +345,32 @@
             ? "p-4 rounded-xl text-center space-y-1 bg-emerald-950 text-emerald-300 border border-emerald-700" 
             : "p-4 rounded-xl text-center space-y-1 bg-amber-950 text-amber-300 border border-amber-700";
           
-          titleDiv.innerText = type === 'ENTREE' ? "✅ ENTREE VALIDEE" : "🔴 SORTIE VALIDEE";
+          titleDiv.innerText = type === 'ENTREE' ? "✅ ENTRÉE VALIDÉE" : "🔴 SORTIE VALIDÉE";
           msgDiv.innerHTML = `Élève : <b>${student.name}</b> (${student.class})<br>Heure : <b>${timeStr}</b>`;
         } else {
           resultDiv.className = "p-4 rounded-xl text-center space-y-1 bg-red-950 text-red-300 border border-red-700";
           titleDiv.innerText = "❌ ÉLÈVE INCONNU";
-          msgDiv.innerText = "Cette empreinte ne correspond à aucun élève inscrit.";
+          msgDiv.innerText = "Cette empreinte n'est pas encore enregistrée.";
         }
 
       } catch (err) {
         console.error(err);
         resultDiv.className = "p-4 rounded-xl text-center space-y-1 bg-slate-900 text-slate-300 border border-slate-700";
         titleDiv.innerText = "⚠️ ÉCHEC DU SCAN";
-        msgDiv.innerText = "Empreinte non reconnue ou action annulée.";
+        msgDiv.innerText = "Scan annulé.";
       }
 
       resultDiv.classList.remove('hidden');
     }
 
-    // RECHERCHE PARENTS
+    // 4. RECHERCHE MANUELLE PAR NOM
     async function searchStudentStatus() {
       const searchName = document.getElementById('parent-search-input').value.trim().toLowerCase();
       const resultsDiv = document.getElementById('parent-results');
       resultsDiv.innerHTML = `<p class="text-xs text-slate-400 text-center">Recherche en cours...</p>`;
 
       if (!searchName) {
-        resultsDiv.innerHTML = `<p class="text-xs text-red-400 text-center">Veuillez entrer un nom d'élève.</p>`;
+        resultsDiv.innerHTML = `<p class="text-xs text-red-400 text-center">Veuillez entrer un nom.</p>`;
         return;
       }
 
@@ -328,7 +412,7 @@
 
       } catch (err) {
         console.error(err);
-        resultsDiv.innerHTML = `<p class="text-xs text-red-400 text-center">Erreur de chargement des données.</p>`;
+        resultsDiv.innerHTML = `<p class="text-xs text-red-400 text-center">Erreur de recherche.</p>`;
       }
     }
   </script>
