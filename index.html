@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Présence Scolaire PWA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // ⚠️ REMPLACEZ CES CLÉS PAR CELLES DE VOTRE CONSOLE FIREBASE ⚠️
+    const firebaseConfig = {
+      apiKey: "VOTRE_API_KEY",
+      authDomain: "votre-projet.firebaseapp.com",
+      projectId: "votre-projet",
+      storageBucket: "votre-projet.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    window.db = db;
+    window.fs = { doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy };
+  </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-3 md:p-6 font-sans">
+
+  <div class="max-w-lg mx-auto space-y-4">
+
+    <!-- En-tête -->
+    <header class="text-center bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-xl">
+      <h1 class="text-xl font-extrabold text-blue-400">🏫 Présence Scolaire</h1>
+      <p class="text-xs text-slate-400 mt-1">Gestion en temps réel des élèves</p>
+    </header>
+
+    <!-- Navigation par Onglets -->
+    <nav class="grid grid-cols-3 gap-1 bg-slate-800 p-1.5 rounded-xl border border-slate-700 text-xs font-semibold text-center">
+      <button onclick="showTab('borne')" id="nav-borne" class="py-2.5 rounded-lg bg-emerald-600 text-white shadow">
+        📲 Pointage (Borne)
+      </button>
+      <button onclick="showTab('parent')" id="nav-parent" class="py-2.5 rounded-lg text-slate-400 hover:text-white">
+        👨‍👩‍👧 Espace Parents
+      </button>
+      <button onclick="showTab('admin')" id="nav-admin" class="py-2.5 rounded-lg text-slate-400 hover:text-white">
+        🔒 Admin (1 Téléphone)
+      </button>
+    </nav>
+
+    <!-- ========================================== -->
+    <!-- SECTION 1 : BORNE DE POINTAGE (SCANNER)    -->
+    <!-- ========================================== -->
+    <section id="tab-borne" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-5">
+      <div class="text-center">
+        <h2 class="text-lg font-bold text-emerald-400">Pointez à l'entrée / sortie</h2>
+        <p class="text-xs text-slate-400 mt-1">Placez votre doigt ou validez l'empreinte biométrique.</p>
+      </div>
+
+      <div class="space-y-3">
+        <button onclick="processScan('ENTREE')" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg text-base flex justify-center items-center gap-2">
+          🟢 Pointer mon ENTREE
+        </button>
+
+        <button onclick="processScan('SORTIE')" class="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg text-base flex justify-center items-center gap-2">
+          🔴 Pointer ma SORTIE
+        </button>
+      </div>
+
+      <!-- Résultat du Scan -->
+      <div id="scan-result" class="hidden p-4 rounded-xl text-center space-y-1">
+        <div id="scan-title" class="font-extrabold text-lg"></div>
+        <div id="scan-message" class="text-sm"></div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2 : ESPACE PARENTS (RECHERCHE)      -->
+    <!-- ========================================== -->
+    <section id="tab-parent" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4 hidden">
+      <div>
+        <h2 class="text-lg font-bold text-blue-400">Vérifier la présence d'un élève</h2>
+        <p class="text-xs text-slate-400">Entrez le nom de votre enfant pour voir ses heures d'arrivée et de sortie.</p>
+      </div>
+
+      <div class="flex gap-2">
+        <input type="text" id="parent-search-input" placeholder="Nom ou prénom de l'élève..." class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500">
+        <button onclick="searchStudentStatus()" class="px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm">
+          Chercher
+        </button>
+      </div>
+
+      <!-- Affichage du statut parent -->
+      <div id="parent-results" class="space-y-3 pt-2"></div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3 : ADMIN (UN SEUL TÉLÉPHONE)      -->
+    <!-- ========================================== -->
+    <section id="tab-admin" class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4 hidden">
+      
+      <!-- Connexion restreinte pour l'admin -->
+      <div id="admin-login" class="space-y-3">
+        <h2 class="text-lg font-bold text-slate-200">Accès Administrateur</h2>
+        <p class="text-xs text-slate-400">Seul l'appareil administrateur autorisé peut inscrire des élèves.</p>
+        <input type="password" id="admin-pass" placeholder="Mot de passe admin" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm">
+        <button onclick="loginAdmin()" class="w-full py-3 bg-blue-600 font-bold rounded-xl text-sm">Se connecter</button>
+      </div>
+
+      <!-- Formulaire d'enregistrement (Masqué par défaut) -->
+      <div id="admin-form" class="hidden space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-bold text-emerald-400">Inscrire un Élève</h2>
+          <span class="text-xs bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full border border-emerald-700">Admin Déverrouillé</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Nom complet :</label>
+          <input type="text" id="student-name" placeholder="Ex: Jean Dupont" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Classe :</label>
+          <input type="text" id="student-class" placeholder="Ex: 4ème B" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm">
+        </div>
+
+        <button onclick="registerStudentBiometrics()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded-xl text-sm shadow flex justify-center items-center gap-2">
+          🔐 Assigner l'empreinte & Enregistrer
+        </button>
+
+        <div id="admin-status" class="text-xs text-center font-medium"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // Mot de passe d'administration (À modifier selon vos besoins)
+    const ADMIN_PASSWORD = "admin1234";
+
+    // Gestion de la navigation entre onglets
+    function showTab(tab) {
+      ['borne', 'parent', 'admin'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`nav-${t}`).className = 'py-2.5 rounded-lg text-slate-400 hover:text-white';
+      });
+
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.getElementById(`nav-${tab}`).className = 'py-2.5 rounded-lg bg-blue-600 text-white shadow';
+    }
+
+    // Authentification Admin
+    function loginAdmin() {
+      const pass = document.getElementById('admin-pass').value;
+      if (pass === ADMIN_PASSWORD) {
+        document.getElementById('admin-login').classList.add('hidden');
+        document.getElementById('admin-form').classList.remove('hidden');
+      } else {
+        alert("Mot de passe incorrect.");
+      }
+    }
+
+    // ENREGISTREMENT DE L'ÉLÈVE (Seulement sur le téléphone Admin)
+    async function registerStudentBiometrics() {
+      const name = document.getElementById('student-name').value.trim();
+      const studentClass = document.getElementById('student-class').value.trim();
+      const status = document.getElementById('admin-status');
+
+      if (!name || !studentClass) {
+        alert("Veuillez saisir le nom et la classe.");
+        return;
+      }
+
+      status.className = "text-xs text-center text-blue-400";
+      status.innerText = "Demande d'empreinte biométrique en cours...";
+
+      try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge: challenge,
+            rp: { name: "Présence Scolaire PWA", id: window.location.hostname },
+            user: {
+              id: Uint8Array.from(name, c => c.charCodeAt(0)),
+              name: name,
+              displayName: name
+            },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+            authenticatorSelection: { authenticatorAttachment: "platform" },
+            timeout: 60000
+          }
+        });
+
+        const rawId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+
+        // Sauvegarde dans la base Firebase
+        const { doc, setDoc } = window.fs;
+        await setDoc(doc(window.db, "students", rawId), {
+          name: name,
+          nameLower: name.toLowerCase(),
+          class: studentClass,
+          registeredAt: new Date().toISOString()
+        });
+
+        status.className = "text-xs text-center text-emerald-400";
+        status.innerText = "✅ Élève enregistré avec succès dans Firebase !";
+        document.getElementById('student-name').value = '';
+        document.getElementById('student-class').value = '';
+
+      } catch (err) {
+        console.error(err);
+        status.className = "text-xs text-center text-red-400";
+        status.innerText = "❌ Erreur de capture biométrique : " + err.message;
+      }
+    }
+
+    // POINTAGE DU SCANNER (Sur la borne d'entrée)
+    async function processScan(type) {
+      const resultDiv = document.getElementById('scan-result');
+      const titleDiv = document.getElementById('scan-title');
+      const msgDiv = document.getElementById('scan-message');
+
+      resultDiv.classList.add('hidden');
+
+      try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const assertion = await navigator.credentials.get({
+          publicKey: {
+            challenge: challenge,
+            timeout: 60000,
+            userVerification: "required"
+          }
+        });
+
+        const rawId = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+
+        // Vérification de l'élève dans Firebase
+        const { doc, getDoc, collection, addDoc } = window.fs;
+        const studentDoc = await getDoc(doc(window.db, "students", rawId));
+
+        if (studentDoc.exists()) {
+          const student = studentDoc.data();
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+          // Sauvegarde de la présence dans la base Firebase
+          await addDoc(collection(window.db, "attendances"), {
+            studentId: rawId,
+            studentName: student.name,
+            class: student.class,
+            type: type, // 'ENTREE' ou 'SORTIE'
+            timestamp: now.toISOString(),
+            dateString: now.toLocaleDateString('fr-FR')
+          });
+
+          resultDiv.className = type === 'ENTREE' 
+            ? "p-4 rounded-xl text-center space-y-1 bg-emerald-950 text-emerald-300 border border-emerald-700" 
+            : "p-4 rounded-xl text-center space-y-1 bg-amber-950 text-amber-300 border border-amber-700";
+          
+          titleDiv.innerText = type === 'ENTREE' ? "✅ ENTREE VALIDEE" : "🔴 SORTIE VALIDEE";
+          msgDiv.innerHTML = `<b>${student.name}</b> (${student.class})<br>Heure : <b>${timeStr}</b>`;
+        } else {
+          resultDiv.className = "p-4 rounded-xl text-center space-y-1 bg-red-950 text-red-300 border border-red-700";
+          titleDiv.innerText = "❌ ÉLÈVE INCONNU";
+          msgDiv.innerText = "L'empreinte ne correspond à aucun élève enregistré.";
+        }
+
+      } catch (err) {
+        console.error(err);
+        resultDiv.className = "p-4 rounded-xl text-center space-y-1 bg-slate-900 text-slate-300 border border-slate-700";
+        titleDiv.innerText = "⚠️ ÉCHEC DU SCAN";
+        msgDiv.innerText = "Scan annulé ou non reconnu.";
+      }
+
+      resultDiv.classList.remove('hidden');
+    }
+
+    // ESPACE PARENTS : CONSULTATION EN TEMPS RÉEL
+    async function searchStudentStatus() {
+      const searchName = document.getElementById('parent-search-input').value.trim().toLowerCase();
+      const resultsDiv = document.getElementById('parent-results');
+      resultsDiv.innerHTML = `<p class="text-xs text-slate-400 text-center">Recherche en cours...</p>`;
+
+      if (!searchName) {
+        resultsDiv.innerHTML = `<p class="text-xs text-red-400 text-center">Veuillez saisir un nom.</p>`;
+        return;
+      }
+
+      try {
+        const { collection, query, where, getDocs, orderBy } = window.fs;
+        
+        // Recherche des pointages de l'élève
+        const q = query(
+          collection(window.db, "attendances"),
+          where("studentName", ">=", searchName),
+          where("studentName", "<=", searchName + "\uf8ff")
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          resultsDiv.innerHTML = `<p class="text-xs text-slate-400 text-center">Aucun enregistrement trouvé pour cet élève.</p>`;
+          return;
+        }
+
+        let html = '';
+        querySnapshot.forEach((docSnap) => {
+          const item = docSnap.data();
+          const dateObj = new Date(item.timestamp);
+          const timeStr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = dateObj.toLocaleDateString('fr-FR');
+
+          const isEntree = item.type === 'ENTREE';
+
+          html += `
+            <div class="p-3 bg-slate-900 border ${isEntree ? 'border-emerald-800' : 'border-amber-800'} rounded-xl flex justify-between items-center text-xs">
+              <div>
+                <p class="font-bold text-slate-200">${item.studentName} <span class="text-slate-500">(${item.class})</span></p>
+                <p class="text-slate-400 mt-0.5">Le ${dateStr} à ${timeStr}</p>
+              </div>
+              <span class="px-2.5 py-1 font-extrabold rounded-full ${isEntree ? 'bg-emerald-950 text-emerald-400 border border-emerald-700' : 'bg-amber-950 text-amber-400 border border-amber-700'}">
+                ${item.type}
+              </span>
+            </div>
+          `;
+        });
+
+        resultsDiv.innerHTML = html;
+
+      } catch (err) {
+        console.error(err);
+        resultsDiv.innerHTML = `<p class="text-xs text-red-400 text-center">Erreur lors de la recherche.</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
