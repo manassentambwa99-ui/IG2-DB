@@ -2,21 +2,21 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Institut de la Gombe 2 - Gestion Scolaire</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d6efd">
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase v10 CDN (Compat Mode) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-  <!-- STYLE CSS INTÉGRÉ (Directement dans l'index) -->
   <style>
     :root {
       --primary: #0d6efd;
-      --bg-light: #f4f7fb;
+      --primary-dark: #0a58ca;
+      --bg-light: #f0f4f8;
       --card-bg: #ffffff;
       --text-dark: #1e293b;
       --text-muted: #64748b;
@@ -31,10 +31,11 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: var(--bg-light);
+      background-color: #1e293b;
       color: var(--text-dark);
       display: flex;
       justify-content: center;
@@ -44,89 +45,136 @@
     #app-container {
       width: 100%;
       max-width: 430px;
-      background: #ffffff;
+      background: var(--bg-light);
       min-height: 100vh;
-      box-shadow: 0 0 20px rgba(0,0,0,0.08);
+      box-shadow: 0 0 25px rgba(0,0,0,0.3);
       position: relative;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     /* En-tête */
     .app-header {
       background: var(--primary);
       color: white;
-      padding: 16px;
+      padding: 14px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     .header-title {
       display: flex;
       align-items: center;
       gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
     }
 
     .header-logo {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
       background: white;
       border: 1px solid white;
     }
 
+    .header-icon {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
     /* Écrans */
     .screen {
       display: none;
-      padding: 20px;
+      padding: 16px;
       flex: 1;
+      padding-bottom: 80px;
     }
 
     .screen.active {
       display: block;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* Splash Screen & Connexion */
-    .splash-content {
+    .splash-container {
       text-align: center;
-      margin-top: 40px;
+      padding: 30px 10px;
     }
 
     .logo-large {
       width: 130px;
       height: auto;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
     }
 
     .school-title {
       color: var(--primary);
       font-size: 20px;
       font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .sub-title {
+      color: var(--primary-dark);
+      font-size: 14px;
+      font-weight: 700;
       margin-bottom: 4px;
     }
 
     .motto {
       color: var(--danger);
-      font-weight: 600;
-      font-size: 13px;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.5px;
       margin-bottom: 24px;
     }
 
-    /* Formulaires & Boutons */
-    .input-group {
-      margin-bottom: 15px;
+    /* Input & Boutons */
+    .form-card {
+      background: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
     }
 
-    .input-group input {
+    .input-group {
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input-group input, .input-group select {
       width: 100%;
-      padding: 14px;
-      border: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
       border-radius: 10px;
       background: #f8fafc;
+      font-size: 14px;
       outline: none;
     }
 
@@ -137,93 +185,101 @@
       color: white;
       border: none;
       border-radius: 10px;
-      font-weight: 600;
-      font-size: 16px;
+      font-weight: 700;
+      font-size: 15px;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
     }
 
     .btn-secondary {
       width: 100%;
       padding: 12px;
-      background: transparent;
+      background: white;
       color: var(--primary);
-      border: 1px solid var(--primary);
+      border: 1.5px solid var(--primary);
       border-radius: 10px;
       margin-top: 10px;
       font-weight: 600;
+      font-size: 14px;
       cursor: pointer;
     }
 
-    /* Tableau de bord */
+    /* Cartes Statistiques */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
 
     .stat-card {
-      background: #f8fafc;
-      padding: 12px;
+      background: white;
+      padding: 14px 8px;
       border-radius: var(--border-radius);
       text-align: center;
       border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
 
     .stat-number {
-      font-size: 20px;
-      font-weight: bold;
+      font-size: 22px;
+      font-weight: 800;
     }
 
     .stat-card.present .stat-number { color: var(--success); }
     .stat-card.absent .stat-number { color: var(--danger); }
     .stat-card.late .stat-number { color: var(--warning); }
 
-    /* Badges */
-    .badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
+    /* Grille de Menu (Boutons carrés) */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
     }
-    .badge-present { background: #dcfce7; color: #15803d; }
-    .badge-absent { background: #fee2e2; color: #b91c1c; }
-    .badge-late { background: #fef3c7; color: #b45309; }
 
-    /* Barre de Navigation Inférieure */
-    .bottom-nav {
-      position: sticky;
-      bottom: 0;
+    .menu-card {
       background: white;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .nav-item {
+      padding: 16px 8px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      font-size: 11px;
-      color: var(--text-muted);
-      cursor: pointer;
-      border: none;
-      background: none;
+      gap: 8px;
     }
 
-    .nav-item.active {
+    .menu-card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #eff6ff;
       color: var(--primary);
-      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
     }
 
-    /* Liste Élèves */
+    .menu-card label {
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Lists & Badges */
     .student-item {
+      background: white;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px;
-      border-bottom: 1px solid #f1f5f9;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
     }
 
     .student-info {
@@ -233,10 +289,89 @@
     }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      background: #cbd5e1;
+      background: #e2e8f0;
+      object-fit: cover;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-present { background: #dcfce7; color: #15803d; }
+    .badge-absent { background: #fee2e2; color: #b91c1c; }
+    .badge-late { background: #fef3c7; color: #b45309; }
+
+    /* Navigation Inférieure */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      max-width: 430px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      border-top: 1px solid #e2e8f0;
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      gap: 3px;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Camembert et barres des rapports */
+    .pie-chart-mock {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(var(--primary) 0% 96%, #e2e8f0 96% 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 15px auto;
+    }
+
+    .pie-center {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
     }
   </style>
 </head>
@@ -244,104 +379,274 @@
 
 <div id="app-container">
 
-  <!-- En-tête -->
+  <!-- EN-TÊTE DYNAMIQUE -->
   <header class="app-header" id="main-header" style="display:none;">
     <div class="header-title">
       <img src="1601.jpg" alt="Logo Institut de la Gombe 2" class="header-logo">
-      <span>INSTITUT DE LA GOMBE 2</span>
+      <span id="header-screen-title">INSTITUT DE LA GOMBE 2</span>
     </div>
+    <button class="header-icon" onclick="switchScreen('screen-notifications')">🔔</button>
   </header>
 
-  <!-- 1. Connexion / Login -->
+  <!-- 1. SPLASH / LOGIN -->
   <section id="screen-login" class="screen active">
-    <div class="splash-content">
+    <div class="splash-container">
       <img src="1601.jpg" alt="Logo Institut de la Gombe 2" class="logo-large">
       <h1 class="school-title">INSTITUT DE LA GOMBE 2</h1>
-      <p style="color:#0d6efd; font-weight:bold;">« PLUS HAUT »</p>
+      <p class="sub-title">« PLUS HAUT »</p>
       <p class="motto">DISCIPLINE – TRAVAIL – JOIE</p>
 
-      <form id="login-form" onsubmit="event.preventDefault(); switchScreen('screen-dashboard');">
-        <div class="input-group">
-          <input type="text" placeholder="Nom d'utilisateur / Identifiant" required>
-        </div>
-        <div class="input-group">
-          <input type="password" placeholder="Mot de passe" required>
-        </div>
-        <button type="submit" class="btn-primary">Se connecter</button>
-        <button type="button" class="btn-secondary" onclick="switchScreen('screen-dashboard')">Espace Parent</button>
-      </form>
+      <div class="form-card">
+        <h3 style="margin-bottom: 14px; font-size:16px;">Bienvenue !</h3>
+        <form onsubmit="event.preventDefault(); handleLogin();">
+          <div class="input-group">
+            <label>Identifiant / Nom d'utilisateur</label>
+            <input type="text" id="login-id" placeholder="Ex: direction@ig2.cd" value="direction@ig2.cd" required>
+          </div>
+          <div class="input-group">
+            <label>Mot de passe</label>
+            <input type="password" id="login-pass" value="••••••••" required>
+          </div>
+          <button type="submit" class="btn-primary">Se connecter</button>
+          <button type="button" class="btn-secondary" onclick="switchRole('parent')">Se connecter avec compte parent</button>
+        </form>
+      </div>
+      <p style="font-size:11px; color:var(--text-muted); margin-top:15px;">Version 1.0.0 — PWA Officielle</p>
     </div>
   </section>
 
-  <!-- 2. Dashboard Direction -->
+  <!-- 2. DASHBOARD DIRECTION -->
   <section id="screen-dashboard" class="screen">
-    <h2 style="margin-bottom: 15px;">Bonjour, Directeur</h2>
-    
+    <div style="margin-bottom:14px;">
+      <h2>Bonjour, Directeur</h2>
+      <p style="font-size:12px; color:var(--text-muted);">Bienvenue sur votre tableau de bord</p>
+    </div>
+
     <div class="stats-grid">
       <div class="stat-card present">
-        <div class="stat-number">482</div>
-        <div style="font-size:11px;">Présents</div>
+        <div class="stat-number" id="stat-present">482</div>
+        <div style="font-size:11px; color:var(--text-muted);">Élèves présents</div>
       </div>
       <div class="stat-card absent">
-        <div class="stat-number">12</div>
-        <div style="font-size:11px;">Absents</div>
+        <div class="stat-number" id="stat-absent">12</div>
+        <div style="font-size:11px; color:var(--text-muted);">Absents</div>
       </div>
       <div class="stat-card late">
-        <div class="stat-number">8</div>
-        <div style="font-size:11px;">En retard</div>
+        <div class="stat-number" id="stat-late">8</div>
+        <div style="font-size:11px; color:var(--text-muted);">En retard</div>
       </div>
     </div>
 
-    <h3 style="margin-bottom:10px;">Accès rapide</h3>
-    <button class="btn-primary" style="margin-bottom:10px;" onclick="switchScreen('screen-students')">Liste des élèves</button>
-    <button class="btn-secondary" onclick="switchScreen('screen-scan')">Module de Pointage</button>
+    <div class="menu-grid">
+      <div class="menu-card" onclick="switchScreen('screen-realtime')">
+        <div class="menu-card-icon">📊</div>
+        <label>Suivi des présences</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-students')">
+        <div class="menu-card-icon">👤</div>
+        <label>Gestion des élèves</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-reports')">
+        <div class="menu-card-icon">📈</div>
+        <label>Rapports</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-discipline')">
+        <div class="menu-card-icon">⚖️</div>
+        <label>Discipline</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-settings')">
+        <div class="menu-card-icon">⚙️</div>
+        <label>Paramètres</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-notifications')">
+        <div class="menu-card-icon">🔔</div>
+        <label>Notifications</label>
+      </div>
+    </div>
   </section>
 
-  <!-- 3. Liste Élèves -->
+  <!-- 3. LISTE DES ÉLÈVES -->
   <section id="screen-students" class="screen">
-    <h2>Liste des élèves</h2>
-    <div class="input-group" style="margin-top:10px;">
-      <input type="text" placeholder="Rechercher un élève...">
+    <h2 style="margin-bottom:10px;">Liste des élèves</h2>
+    <div class="input-group">
+      <input type="text" id="student-search" placeholder="🔍 Rechercher un élève..." onkeyup="filterStudents()">
     </div>
 
-    <div class="student-list">
-      <div class="student-item">
-        <div class="student-info">
-          <div class="avatar"></div>
-          <div>
-            <strong>MUKENDI Christian</strong>
-            <div style="font-size:12px; color:gray;">1ère A</div>
-          </div>
-        </div>
-        <span class="badge badge-present">Présent</span>
+    <div id="student-container"></div>
+  </section>
+
+  <!-- 4. DÉTAIL D'UN ÉLÈVE -->
+  <section id="screen-student-detail" class="screen">
+    <button class="btn-secondary" style="margin-bottom:12px; width:auto; padding:6px 12px; font-size:12px;" onclick="switchScreen('screen-students')">← Retour</button>
+    <div class="form-card" style="text-align:center;">
+      <img src="1601.jpg" id="detail-avatar" class="logo-large" style="width:80px; height:80px; border-radius:50%; margin-bottom:8px;" alt="Eleve">
+      <h2 id="detail-name">MUKENDI Christian</h2>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:12px;" id="detail-class">1ère A</p>
+      
+      <div style="text-align:left; font-size:13px; border-top:1px solid #e2e8f0; padding-top:10px;">
+        <p style="margin-bottom:6px;"><strong>Matricule :</strong> <span id="detail-mat">2026-001</span></p>
+        <p style="margin-bottom:6px;"><strong>Sexe :</strong> Masculin</p>
+        <p style="margin-bottom:6px;"><strong>Contact Parent :</strong> +243 812 345 678</p>
+        <p style="margin-bottom:6px;"><strong>Statut du jour :</strong> <span class="badge badge-present">Présent 07:32</span></p>
       </div>
 
-      <div class="student-item">
-        <div class="student-info">
-          <div class="avatar"></div>
-          <div>
-            <strong>SIZOLO Ferreol</strong>
-            <div style="font-size:12px; color:gray;">1ère B</div>
-          </div>
-        </div>
-        <span class="badge badge-absent">Absent</span>
+      <button class="btn-primary" style="margin-top:14px;" onclick="switchScreen('screen-history')">Voir l'historique</button>
+      <button class="btn-secondary" onclick="switchScreen('screen-messages')">Envoyer un message</button>
+    </div>
+  </section>
+
+  <!-- 5. PRÉSENCE EN TEMPS RÉEL -->
+  <section id="screen-realtime" class="screen">
+    <h2>Présence en temps réel <span class="badge badge-present">En direct</span></h2>
+    <div class="form-card" style="margin-top:10px; text-align:center;">
+      <p style="font-size:12px; color:var(--text-muted);">Classe : <strong>1ère A</strong> | Enseignant : <strong>M. KASONGO</strong></p>
+      <div class="pie-chart-mock">
+        <div class="pie-center">28/30</div>
+      </div>
+      <div style="display:flex; justify-content:space-around; font-size:12px; margin-top:10px;">
+        <div>🟢 Présents : <strong>28</strong></div>
+        <div>🔴 Absents : <strong>2</strong></div>
       </div>
     </div>
   </section>
 
-  <!-- 4. Pointage Biométrique / Badge -->
+  <!-- 6. POINTAGE BIOMÉTRIQUE / BADGE / QR -->
   <section id="screen-scan" class="screen">
     <h2>Pointage des élèves</h2>
-    <div style="text-align:center; padding: 40px 0;">
-      <div style="width:120px; height:120px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto; border: 2px dashed #0d6efd;">
-        <span style="font-size:40px;">👆</span>
+    <div class="form-card" style="text-align:center; margin-top:10px;">
+      <div style="display:flex; justify-content:center; gap:8px; margin-bottom:16px;">
+        <button class="btn-secondary" style="margin:0; padding:8px 12px;">Badge</button>
+        <button class="btn-primary" style="margin:0; padding:8px 12px;">Empreinte</button>
+        <button class="btn-secondary" style="margin:0; padding:8px 12px;">Code QR</button>
       </div>
-      <p>Scannez l'empreinte de l'élève pour enregistrer sa présence.</p>
-      <button class="btn-primary" style="margin-top:20px;" onclick="alert('Pointage confirmé : MUKENDI Christian (07:32)')">Simuler Empreinte</button>
+
+      <div style="width:110px; height:110px; border-radius:50%; background:#eff6ff; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; border:2px dashed var(--primary); font-size:40px;">
+        👆
+      </div>
+      <p style="font-size:13px; color:var(--text-muted);">Scannez l'empreinte de l'élève pour enregistrer sa présence.</p>
+      <button class="btn-primary" style="margin-top:16px;" onclick="registerAttendance()">Scanner maintenant</button>
+    </div>
+
+    <h3 style="margin:16px 0 8px 0; font-size:14px;">Dernières présences</h3>
+    <div id="recent-scans"></div>
+  </section>
+
+  <!-- 7. HISTORIQUE DES PRÉSENCES -->
+  <section id="screen-history" class="screen">
+    <h2>Historique des présences</h2>
+    <div style="margin-top:10px;" id="history-container"></div>
+  </section>
+
+  <!-- 8. ESPACE PARENT -->
+  <section id="screen-parent" class="screen">
+    <h2>Bonjour, M. KABASELE</h2>
+    <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Suivez la scolarité de votre enfant en temps réel.</p>
+
+    <div class="form-card" style="margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+        <img src="1601.jpg" style="width:48px; height:48px; border-radius:50%;" alt="Enfant">
+        <div>
+          <strong>MUKENDI Christian</strong>
+          <div style="font-size:12px; color:var(--text-muted);">1ère A</div>
+        </div>
+        <span class="badge badge-present" style="margin-left:auto;">Présent</span>
+      </div>
+      <div style="font-size:12px; color:var(--text-muted);">Arrivée enregistrée à 07:32 via Empreinte</div>
+    </div>
+
+    <div class="menu-grid">
+      <div class="menu-card" onclick="switchScreen('screen-history')">
+        <div class="menu-card-icon">📅</div>
+        <label>Historique</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-messages')">
+        <div class="menu-card-icon">💬</div>
+        <label>Messages</label>
+      </div>
+      <div class="menu-card" onclick="switchScreen('screen-notifications')">
+        <div class="menu-card-icon">🔔</div>
+        <label>Notifications</label>
+      </div>
     </div>
   </section>
 
-  <!-- Navigation Inférieure -->
+  <!-- 9. NOTIFICATIONS -->
+  <section id="screen-notifications" class="screen">
+    <h2>Notifications</h2>
+    <div style="margin-top:10px;">
+      <div class="form-card" style="margin-bottom:8px; border-left:4px solid var(--success);">
+        <strong>🟢 Présence confirmée</strong>
+        <p style="font-size:12px; color:var(--text-muted);">Votre enfant MUKENDI Christian est arrivé à 07:32.</p>
+      </div>
+      <div class="form-card" style="margin-bottom:8px; border-left:4px solid var(--danger);">
+        <strong>🔴 Absence signalée</strong>
+        <p style="font-size:12px; color:var(--text-muted);">SIZOLO Ferreol n'a pas été enregistré ce matin.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. MESSAGES -->
+  <section id="screen-messages" class="screen">
+    <h2>Messagerie</h2>
+    <div style="margin-top:10px;">
+      <div class="student-item" onclick="alert('Ouverture de la discussion avec la Direction')">
+        <div class="student-info">
+          <div class="avatar" style="background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">D</div>
+          <div>
+            <strong>Direction</strong>
+            <div style="font-size:12px; color:gray;">Réunion parents - 26 septembre</div>
+          </div>
+        </div>
+        <span style="font-size:10px; color:gray;">18:20</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. RAPPORTS ET STATISTIQUES -->
+  <section id="screen-reports" class="screen">
+    <h2>Rapports et statistiques</h2>
+    <div class="form-card" style="text-align:center; margin-top:10px;">
+      <h3>Taux de présence global</h3>
+      <div class="pie-chart-mock">
+        <div class="pie-center">96%</div>
+      </div>
+      <div style="text-align:left; font-size:13px; margin-top:14px;">
+        <p>1ère A : 98% <div class="progress-bar"><div class="progress-fill" style="width:98%;"></div></div></p>
+        <p style="margin-top:8px;">1ère B : 95% <div class="progress-bar"><div class="progress-fill" style="width:95%;"></div></div></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12. PERSONNEL DE DISCIPLINE -->
+  <section id="screen-discipline" class="screen">
+    <h2>Personnel de discipline</h2>
+    <div class="menu-grid" style="margin-top:10px;">
+      <div class="menu-card" onclick="switchScreen('screen-scan')">
+        <div class="menu-card-icon">🔍</div>
+        <label>Vérification</label>
+      </div>
+      <div class="menu-card" onclick="alert('Module de gestion des retards')">
+        <div class="menu-card-icon">⏱️</div>
+        <label>Gestion retards</label>
+      </div>
+      <div class="menu-card" onclick="alert('Signalement d’incident')">
+        <div class="menu-card-icon">⚠️</div>
+        <label>Signalements</label>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. PARAMÈTRES -->
+  <section id="screen-settings" class="screen">
+    <h2>Paramètres</h2>
+    <div class="form-card" style="margin-top:10px;">
+      <p style="margin-bottom:12px;"><strong>Compte :</strong> Direction (direction@ig2.cd)</p>
+      <button class="btn-secondary" style="margin-bottom:8px;" onclick="alert('Synchronisation Firebase réussie.')">Synchroniser avec Firebase</button>
+      <button class="btn-primary" style="background:var(--danger);" onclick="handleLogout()">Se déconnecter</button>
+    </div>
+  </section>
+
+  <!-- NAVIGATION INFÉRIEURE -->
   <nav class="bottom-nav" id="main-nav" style="display:none;">
     <button class="nav-item active" onclick="switchScreen('screen-dashboard')">
       <span>🏠</span>
@@ -355,36 +660,87 @@
       <span>📌</span>
       <span>Pointage</span>
     </button>
+    <button class="nav-item" onclick="switchScreen('screen-reports')">
+      <span>📊</span>
+      <span>Rapports</span>
+    </button>
+    <button class="nav-item" onclick="switchScreen('screen-settings')">
+      <span>⚙️</span>
+      <span>Profil</span>
+    </button>
   </nav>
 
 </div>
 
-<!-- SCRIPT JAVASCRIPT INTÉGRÉ -->
+<!-- SCRIPT LOGIQUE APP & FIREBASE -->
 <script>
-  // Configuration Firebase
+  // CONFIGURATION FIREBASE EXACTE FOURNIE
   const firebaseConfig = {
-    apiKey: "VOTRE_API_KEY",
-    authDomain: "gombe2-app.firebaseapp.com",
-    projectId: "gombe2-app",
-    storageBucket: "gombe2-app.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef"
+    apiKey: "AIzaSyDJ8M2hSVuhkGGUD19P8_5ksAaGAc5xRRk",
+    authDomain: "mon123ecole.firebaseapp.com",
+    projectId: "mon123ecole",
+    storageBucket: "mon123ecole.firebasestorage.app",
+    messagingSenderId: "323449218378",
+    appId: "1:323449218378:web:4ff5c63be01886925a4db3"
   };
 
-  if (firebase.apps.length === 0) {
+  // Initialisation
+  if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
+  const db = firebase.firestore();
 
-  // Enregistrement PWA Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('PWA Service Worker actif'))
-        .catch(err => console.error('Erreur PWA:', err));
+  // Données locales initiales
+  const studentsList = [
+    { id: '2026-001', name: 'MUKENDI Christian', class: '1ère A', status: 'present', time: '07:32' },
+    { id: '2026-002', name: 'KABASELE Sarah', class: '1ère A', status: 'present', time: '07:33' },
+    { id: '2026-003', name: 'SIZOLO Ferreol', class: '1ère B', status: 'absent', time: '--:--' },
+    { id: '2026-004', name: 'NGOMA Judith', class: '1ère B', status: 'present', time: '07:28' },
+    { id: '2026-005', name: 'LUTETE Patrick', class: '2ème A', status: 'present', time: '07:35' },
+    { id: '2026-006', name: 'ILUNGA David', class: '2ème A', status: 'late', time: '08:04' }
+  ];
+
+  // Rendu de la liste des élèves
+  function renderStudents(list) {
+    const container = document.getElementById('student-container');
+    container.innerHTML = '';
+    list.forEach(st => {
+      let badgeClass = st.status === 'present' ? 'badge-present' : (st.status === 'absent' ? 'badge-absent' : 'badge-late');
+      let statusText = st.status === 'present' ? 'Présent' : (st.status === 'absent' ? 'Absent' : 'En retard');
+
+      container.innerHTML += `
+        <div class="student-item" onclick="openStudentDetail('${st.id}')">
+          <div class="student-info">
+            <img src="IMG-20260924-WA0080.jpg" class="avatar" alt="eleve">
+            <div>
+              <strong>${st.name}</strong>
+              <div style="font-size:12px; color:gray;">${st.class}</div>
+            </div>
+          </div>
+          <span class="badge ${badgeClass}">${statusText}</span>
+        </div>
+      `;
     });
   }
 
-  // Navigation SPA
+  // Filtrer les élèves
+  function filterStudents() {
+    const val = document.getElementById('student-search').value.toLowerCase();
+    const filtered = studentsList.filter(s => s.name.toLowerCase().includes(val) || s.class.toLowerCase().includes(val));
+    renderStudents(filtered);
+  }
+
+  // Détail élève
+  function openStudentDetail(id) {
+    const st = studentsList.find(s => s.id === id);
+    if (!st) return;
+    document.getElementById('detail-name').innerText = st.name;
+    document.getElementById('detail-class').innerText = st.class;
+    document.getElementById('detail-mat').innerText = st.id;
+    switchScreen('screen-student-detail');
+  }
+
+  // Navigation
   function switchScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -400,6 +756,44 @@
       nav.style.display = 'flex';
     }
   }
+
+  // Login & Rôles
+  function handleLogin() {
+    switchScreen('screen-dashboard');
+  }
+
+  function switchRole(role) {
+    if (role === 'parent') switchScreen('screen-parent');
+  }
+
+  function handleLogout() {
+    switchScreen('screen-login');
+  }
+
+  // Simulation de pointage réel
+  function registerAttendance() {
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    alert(`Empreinte reconnue !\nPrésence confirmée pour MUKENDI Christian à ${timeStr}`);
+    
+    // Sauvegarde Firestore
+    db.collection("presences").add({
+      eleve: "MUKENDI Christian",
+      heure: timeStr,
+      date: new Date().toISOString().split('T')[0],
+      methode: "Empreinte"
+    }).catch(err => console.log("Sauvegarde locale mode déconnecté:", err));
+  }
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
+    });
+  }
+
+  // Initialisation
+  renderStudents(studentsList);
 </script>
 
 </body>
