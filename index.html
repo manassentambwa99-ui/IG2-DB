@@ -1,863 +1,406 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0F2E4E">
-<meta name="description" content="Espace scolaire de l'Institut de la Gombe 2 — présence, discipline, actualités et suivi parental.">
-<title>Institut de la Gombe 2 — Espace Scolaire</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Institut de la Gombe 2 - Gestion Scolaire</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
 
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="manifest" href="manifest.json">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- STYLE CSS INTÉGRÉ (Directement dans l'index) -->
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --bg-light: #f4f7fb;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border-radius: 16px;
+    }
 
-<style>
-  :root{
-    --parchment:#F3ECDC; --parchment-deep:#E9DFC7;
-    --cathedral:#0F2E4E; --cathedral-800:#153A60; --cathedral-950:#081A2C;
-    --sky:#4FA8DC; --sky-deep:#2E77A6;
-    --gold:#C9962C; --gold-deep:#A97A1E; --gold-light:#E7C574;
-    --ink:#1B2A38; --ink-soft:#4A5A6B;
-    --line:rgba(15,46,78,0.14);
-    --green:#2E7D54; --amber:#B9791F; --rose:#A64A63; --red:#B34141;
-    --radius-lg:24px; --radius-md:16px; --radius-sm:11px;
-    --shadow-1: 0 22px 44px -22px rgba(15,32,56,0.35);
-  }
-  *{box-sizing:border-box;}
-  html,body{height:100%;}
-  body{
-    margin:0; font-family:'Work Sans', system-ui, sans-serif; color:var(--ink);
-    background:
-      radial-gradient(900px 500px at 10% -10%, rgba(79,168,220,0.16), transparent 60%),
-      radial-gradient(700px 460px at 100% 0%, rgba(201,150,44,0.14), transparent 55%),
-      linear-gradient(180deg, var(--parchment) 0%, var(--parchment-deep) 100%);
-    min-height:100%;
-    padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0;
-    -webkit-font-smoothing:antialiased;
-  }
-  ::selection{ background: var(--gold); color:#231600; }
-  h1,h2,h3{ font-family:'Fraunces', Georgia, serif; margin:0; letter-spacing:0.1px; }
-  .wrap{ max-width:480px; margin:0 auto; padding:18px 16px 118px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-  .ornament{ display:flex; align-items:center; justify-content:center; gap:10px; margin:4px 0 2px; }
-  .ornament .rule{ flex:1; max-width:64px; height:2px; background:linear-gradient(90deg, transparent, var(--gold), transparent); }
-  .ornament .diamond{ width:6px; height:6px; background:var(--gold); transform:rotate(45deg); flex-shrink:0; }
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
 
-  .crest-card{
-    position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;
-    padding:26px 20px 20px; border-radius:var(--radius-lg);
-    background: linear-gradient(155deg, rgba(255,255,255,0.60), rgba(255,255,255,0.24));
-    border:1px solid rgba(255,255,255,0.7);
-    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
-    box-shadow: var(--shadow-1); overflow:hidden;
-    animation: rise .5s ease both;
-  }
-  .crest-card::before{
-    content:""; position:absolute; inset:0;
-    background: linear-gradient(120deg, transparent 45%, rgba(201,150,44,0.16) 60%, transparent 75%);
-    pointer-events:none;
-  }
-  .crest-ring{
-    width:82px; height:82px; border-radius:50%; padding:3px;
-    background: conic-gradient(from 200deg, var(--gold-light), var(--gold-deep), var(--gold-light));
-    box-shadow:0 10px 22px rgba(15,32,56,0.3); flex-shrink:0;
-    animation: rise .6s ease .05s both;
-  }
-  .crest-img{ width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:top center;
-    border:2px solid var(--parchment); display:block; }
-  .crest-text{ animation: rise .6s ease .12s both; }
-  .crest-text h1{ font-size:1.22rem; color:var(--cathedral); line-height:1.2; font-weight:600; margin-top:10px; }
-  .crest-text .subtitle{ margin:4px 0 0; font-size:0.68rem; letter-spacing:1.6px; color:var(--gold-deep); font-weight:700; text-transform:uppercase; }
-  .crest-text .motto{ color:var(--ink-soft); font-size:0.72rem; margin-top:2px; font-style:italic; font-family:'Fraunces',serif; }
+    #app-container {
+      width: 100%;
+      max-width: 430px;
+      background: #ffffff;
+      min-height: 100vh;
+      box-shadow: 0 0 20px rgba(0,0,0,0.08);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
 
-  .clock-row{ display:flex; align-items:center; gap:10px; margin-top:10px; font-family:'Fraunces',serif; animation: rise .6s ease .18s both; }
-  .clock-row .time{ font-size:1.05rem; font-weight:600; color:var(--cathedral); }
-  .clock-row .sep{ width:3px; height:3px; border-radius:50%; background:var(--gold-deep); }
-  .clock-row .date{ font-size:0.72rem; color:var(--ink-soft); text-transform:capitalize; }
+    /* En-tête */
+    .app-header {
+      background: var(--primary);
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  @keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-  section.panel{
-    margin-top:14px; padding:20px; border-radius:var(--radius-lg);
-    background: linear-gradient(165deg, rgba(255,255,255,0.55), rgba(255,255,255,0.20));
-    border:1px solid rgba(255,255,255,0.6);
-    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-    box-shadow: var(--shadow-1); animation: rise .35s ease both;
-  }
-  .panel-head{ text-align:center; margin-bottom:16px; }
-  .panel-head h2{ font-size:1.16rem; color:var(--cathedral); }
-  .panel-head p{ margin:5px 0 0; font-size:0.78rem; color:var(--ink-soft); }
-  .panel-head.left{ text-align:left; }
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: white;
+      border: 1px solid white;
+    }
 
-  .btn{ width:100%; border:none; cursor:pointer; text-align:center; font-family:'Work Sans',sans-serif;
-    font-weight:700; font-size:0.86rem; padding:14px 16px; border-radius:var(--radius-md);
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    transition: transform .12s ease, box-shadow .2s ease, filter .2s ease; }
-  .btn:active{ transform:scale(0.98); }
-  .btn:disabled{ opacity:0.55; cursor:not-allowed; }
-  .btn-scan{ background: linear-gradient(160deg, var(--cathedral), var(--cathedral-950)); color:#F3ECDC; box-shadow:0 12px 26px -12px rgba(15,46,78,0.6); }
-  .btn-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
-  .btn-entree{ background: linear-gradient(160deg, #3FA070, var(--green)); color:#0C2418; box-shadow:0 10px 22px -10px rgba(46,125,84,0.5); }
-  .btn-sortie{ background: linear-gradient(160deg, #D69A3C, var(--amber)); color:#2B1B03; box-shadow:0 10px 22px -10px rgba(185,121,31,0.5); }
-  .btn-primary{ background: linear-gradient(160deg, var(--sky), var(--sky-deep)); color:#062338; box-shadow:0 10px 22px -10px rgba(46,119,166,0.5); }
-  .btn-gold{ background: linear-gradient(160deg, var(--gold-light), var(--gold-deep)); color:#2A1B02; box-shadow:0 10px 22px -10px rgba(169,122,30,0.5); }
-  .btn-rose{ background: linear-gradient(160deg, #C56B84, var(--rose)); color:#2E0F18; box-shadow:0 10px 22px -10px rgba(166,74,99,0.45); }
-  .btn-danger-outline{ background:transparent; border:1px solid rgba(179,65,65,0.4); color:var(--red); }
+    /* Écrans */
+    .screen {
+      display: none;
+      padding: 20px;
+      flex: 1;
+    }
 
-  .spin{ width:16px; height:16px; border-radius:50%; border:2.5px solid rgba(255,255,255,0.4);
-    border-top-color:#fff; animation: spin .7s linear infinite; }
-  @keyframes spin{ to{ transform:rotate(360deg);} }
+    .screen.active {
+      display: block;
+    }
 
-  .result{ margin-top:16px; padding:16px; border-radius:var(--radius-md); text-align:center;
-    border:1px solid; display:none; animation: pop .28s cubic-bezier(.2,1.4,.4,1) both; }
-  .result.show{ display:block; }
-  @keyframes pop{ from{opacity:0; transform:scale(0.94);} to{opacity:1; transform:scale(1);} }
-  .result .r-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
-  .result .r-msg{ font-size:0.85rem; margin-top:4px; line-height:1.5; }
-  .result .r-history{ text-align:left; font-size:0.72rem; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
-  .result .r-history .h-row{ display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed var(--line); }
+    /* Splash Screen & Connexion */
+    .splash-content {
+      text-align: center;
+      margin-top: 40px;
+    }
 
-  .ok{ background:rgba(46,125,84,0.10); border-color:rgba(46,125,84,0.35); color:#1E5B3B; }
-  .warn{ background:rgba(185,121,31,0.10); border-color:rgba(185,121,31,0.35); color:#7A501A; }
-  .bad{ background:rgba(179,65,65,0.10); border-color:rgba(179,65,65,0.35); color:#7E2E2E; }
-  .info{ background:rgba(46,119,166,0.10); border-color:rgba(46,119,166,0.35); color:#1C4D6E; }
-  .muted{ background:rgba(15,46,78,0.05); border-color:var(--line); color:var(--ink-soft); }
+    .logo-large {
+      width: 130px;
+      height: auto;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 
-  label.field-label{ display:block; font-size:0.72rem; font-weight:600; color:var(--ink-soft); margin:0 0 6px; letter-spacing:0.2px; }
-  input[type=text], input[type=password], textarea, select{
-    width:100%; padding:13px 14px; border-radius:var(--radius-sm);
-    background:rgba(255,255,255,0.65); border:1px solid var(--line);
-    color:var(--ink); font-family:'Work Sans',sans-serif; font-size:0.9rem;
-    transition:border-color .2s ease, box-shadow .2s ease;
-  }
-  textarea{ resize:vertical; min-height:80px; }
-  input::placeholder, textarea::placeholder{ color:#8C9AA8; }
-  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--sky); box-shadow:0 0 0 3px rgba(79,168,220,0.2); }
-  .field{ margin-bottom:14px; }
-  .search-row{ display:flex; gap:8px; }
-  .search-row input{ flex:1; }
-  .search-row button{ width:auto; padding:0 18px; }
+    .school-title {
+      color: var(--primary);
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
 
-  .badge{ font-size:0.62rem; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid; letter-spacing:0.3px; }
-  .badge-on{ background:rgba(46,125,84,0.12); border-color:rgba(46,125,84,0.35); color:#1E5B3B; }
-  .hidden{ display:none !important; }
+    .motto {
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
 
-  .srow{ padding:13px 14px; border-radius:var(--radius-sm); background:rgba(255,255,255,0.55); border:1px solid;
-    display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; animation: rise .3s ease both; }
-  .srow .name{ font-weight:700; font-size:0.86rem; color:var(--cathedral); }
-  .srow .cls{ color:var(--ink-soft); font-size:0.72rem; }
-  .srow .when{ color:var(--ink-soft); font-size:0.7rem; margin-top:2px; }
-  .pill-entree{ border-color:rgba(46,125,84,0.35); }
-  .pill-sortie{ border-color:rgba(185,121,31,0.35); }
-  .pill-discipline{ border-color:rgba(166,74,99,0.35); }
-  .stat{ padding:2.5px 9px; border-radius:999px; font-size:0.6rem; font-weight:800; letter-spacing:0.3px; flex-shrink:0; }
-  .stat-entree{ background:rgba(46,125,84,0.14); color:#1E5B3B; border:1px solid rgba(46,125,84,0.3); }
-  .stat-sortie{ background:rgba(185,121,31,0.14); color:#7A501A; border:1px solid rgba(185,121,31,0.3); }
-  .stat-discipline{ background:rgba(166,74,99,0.14); color:#7A2C42; border:1px solid rgba(166,74,99,0.3); }
+    /* Formulaires & Boutons */
+    .input-group {
+      margin-bottom: 15px;
+    }
 
-  .empty-note{ text-align:center; font-size:0.8rem; color:var(--ink-soft); padding:18px 6px; }
+    .input-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      outline: none;
+    }
 
-  .hero{ padding:26px 22px; border-radius:var(--radius-lg); position:relative; overflow:hidden;
-    background: linear-gradient(150deg, rgba(15,46,78,0.94), rgba(21,58,96,0.9));
-    box-shadow:var(--shadow-1); margin-top:14px; }
-  .hero::after{ content:""; position:absolute; inset:0;
-    background: radial-gradient(380px 260px at 92% -12%, rgba(201,150,44,0.38), transparent 60%); pointer-events:none; }
-  .hero .eyebrow{ position:relative; font-size:0.64rem; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold-light); font-weight:700; }
-  .hero h2{ font-size:1.36rem; color:#F3ECDC; position:relative; margin-top:6px; }
-  .hero p{ font-size:0.8rem; color:#C7D3DE; margin-top:8px; max-width:32ch; position:relative; line-height:1.5; }
-  .quicklinks{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:18px; position:relative; }
-  .qlink{ background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); border-radius:var(--radius-sm);
-    padding:13px 6px; text-align:center; cursor:pointer; transition:transform .15s ease, background .2s ease; }
-  .qlink:active{ transform:scale(0.96); }
-  .qlink svg{ width:20px; height:20px; stroke:var(--gold-light); }
-  .qlink .qt{ font-size:0.62rem; font-weight:700; color:#DCE5EC; margin-top:6px; }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+    }
 
-  .news-card{ margin-top:12px; padding:16px; border-radius:var(--radius-md);
-    background:rgba(255,255,255,0.55); border:1px solid rgba(255,255,255,0.7); animation: rise .3s ease both; }
-  .news-card .n-date{ font-size:0.64rem; color:var(--gold-deep); font-weight:700; letter-spacing:0.3px; }
-  .news-card h3{ font-size:0.96rem; color:var(--cathedral); margin-top:5px; }
-  .news-card p{ font-size:0.8rem; color:var(--ink-soft); margin-top:6px; line-height:1.55; white-space:pre-wrap; }
-  .news-card .n-author{ font-size:0.64rem; color:#8C9AA8; margin-top:8px; }
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 10px;
+      margin-top: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
 
-  .subtab-row{ display:flex; gap:6px; margin-bottom:16px; }
-  .subtab{ flex:1; padding:9px 6px; text-align:center; border-radius:10px; font-size:0.68rem; font-weight:700;
-    background:rgba(15,46,78,0.05); border:1px solid var(--line); color:var(--ink-soft); cursor:pointer; }
-  .subtab.active{ background:rgba(46,119,166,0.14); border-color:rgba(46,119,166,0.4); color:var(--cathedral); }
+    /* Tableau de bord */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
 
-  .status-card{ border-radius:var(--radius-lg); padding:22px; text-align:center; margin-top:16px; border:1px solid; animation: pop .3s cubic-bezier(.2,1.4,.4,1) both; }
-  .status-card .s-name{ font-family:'Fraunces',serif; font-size:1.2rem; font-weight:700; }
-  .status-card .s-class{ font-size:0.78rem; color:var(--ink-soft); margin-top:2px; }
-  .status-card .s-state{ font-size:0.94rem; font-weight:700; margin-top:14px; }
-  .status-card .s-time{ font-family:'Fraunces',serif; font-size:1.9rem; font-weight:700; margin-top:4px; }
-  .status-card .s-note{ font-size:0.72rem; color:var(--ink-soft); margin-top:6px; }
-  .status-present{ background:rgba(46,125,84,0.10); border-color:rgba(46,125,84,0.35); color:#1E5B3B; }
-  .status-left{ background:rgba(185,121,31,0.10); border-color:rgba(185,121,31,0.35); color:#7A501A; }
-  .status-absent{ background:rgba(15,46,78,0.05); border-color:var(--line); color:var(--ink-soft); }
+    .stat-card {
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      border: 1px solid #e2e8f0;
+    }
 
-  footer.app-footer{ text-align:center; margin-top:22px; font-size:0.64rem; color:#9AA6B1; letter-spacing:0.3px; }
+    .stat-number {
+      font-size: 20px;
+      font-weight: bold;
+    }
 
-  nav.tabbar{
-    position:fixed; left:0; right:0; bottom:0; z-index:50;
-    display:flex; justify-content:center;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom,0px));
-    background: linear-gradient(180deg, rgba(243,236,220,0) 0%, rgba(243,236,220,0.94) 30%, var(--parchment) 60%);
-  }
-  nav.tabbar .bar{
-    width:100%; max-width:452px; display:flex; justify-content:space-between;
-    background:rgba(255,255,255,0.72); border:1px solid rgba(255,255,255,0.85);
-    border-radius:20px; padding:7px 6px; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    box-shadow: 0 -8px 30px -12px rgba(15,32,56,0.25), var(--shadow-1);
-  }
-  nav.tabbar button{
-    appearance:none; border:none; cursor:pointer; background:transparent; flex:1;
-    display:flex; flex-direction:column; align-items:center; gap:3px;
-    padding:8px 2px; border-radius:14px;
-    color:var(--ink-soft); transition: color .2s ease, background .2s ease, transform .15s ease;
-  }
-  nav.tabbar button svg{ width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; }
-  nav.tabbar button .lbl{ font-size:0.58rem; font-weight:700; letter-spacing:0.2px; }
-  nav.tabbar button.active{ color:var(--cathedral); background:rgba(15,46,78,0.08); }
-  nav.tabbar button.active svg{ stroke:var(--gold-deep); }
-  nav.tabbar button:active{ transform:scale(0.93); }
+    .stat-card.present .stat-number { color: var(--success); }
+    .stat-card.absent .stat-number { color: var(--danger); }
+    .stat-card.late .stat-number { color: var(--warning); }
 
-  #toast-host{ position:fixed; left:0; right:0; bottom:96px; display:flex; flex-direction:column; align-items:center; gap:8px;
-    z-index:999; pointer-events:none; padding:0 16px; }
-  .toast{ pointer-events:auto; max-width:420px; width:100%; background:rgba(15,46,78,0.94);
-    border:1px solid rgba(255,255,255,0.16); backdrop-filter:blur(14px); color:#F3ECDC; font-size:0.8rem; font-weight:600;
-    padding:12px 16px; border-radius:14px; box-shadow:var(--shadow-1); animation: toast-in .25s ease both; }
-  @keyframes toast-in{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-</style>
+    /* Badges */
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-present { background: #dcfce7; color: #15803d; }
+    .badge-absent { background: #fee2e2; color: #b91c1c; }
+    .badge-late { background: #fef3c7; color: #b45309; }
+
+    /* Barre de Navigation Inférieure */
+    .bottom-nav {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    /* Liste Élèves */
+    .student-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .student-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+  </style>
 </head>
 <body>
 
-<div class="wrap">
+<div id="app-container">
 
-  <header class="crest-card">
-    <div class="crest-ring"><img class="crest-img" src="icons/icon-512.png" alt="Blason Institut de la Gombe 2"></div>
-    <div class="crest-text">
-      <h1>Institut de la Gombe 2</h1>
-      <p class="subtitle">Espace scolaire · Don Bosco</p>
-      <div class="ornament"><span class="rule"></span><span class="diamond"></span><span class="rule"></span></div>
-      <p class="motto">Discipline · Travail · Joie</p>
-    </div>
-    <div class="clock-row">
-      <span class="time" id="clock-time">--:--</span>
-      <span class="sep"></span>
-      <span class="date" id="clock-date">—</span>
+  <!-- En-tête -->
+  <header class="app-header" id="main-header" style="display:none;">
+    <div class="header-title">
+      <img src="1601.jpg" alt="Logo Institut de la Gombe 2" class="header-logo">
+      <span>INSTITUT DE LA GOMBE 2</span>
     </div>
   </header>
 
-  <section id="tab-accueil" class="panel" style="padding:0; background:none; border:none; box-shadow:none; backdrop-filter:none;">
-    <div class="hero">
-      <div class="eyebrow">Bienvenue</div>
-      <h2>La vie de l'Institut</h2>
-      <p>Les actualités de l'école, la présence des élèves et le suivi disciplinaire, au même endroit.</p>
-      <div class="quicklinks">
-        <div class="qlink" onclick="showTab('borne')"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11a3 3 0 100-6 3 3 0 000 6zM5 12c0-3.5 3-6 7-6s7 2.5 7 6M4 16c1.5-2 4.5-3 8-3s6.5 1 8 3M8 21c.8-1.5 2.2-2.5 4-2.5s3.2 1 4 2.5"/></svg><div class="qt">Pointer</div></div>
-        <div class="qlink" onclick="showTab('famille')"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM16 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM2 20c0-3 2.5-5.5 6-5.5S14 17 14 20M12 20c.3-2.4 2-4.3 4.5-4.3S21 17.6 21 20"/></svg><div class="qt">Mon enfant</div></div>
-        <div class="qlink" onclick="showTab('discipline')"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 4h6a1 1 0 011 1v1H8V5a1 1 0 011-1zM6 6h12v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6zM9 11h6M9 15h4"/></svg><div class="qt">Discipline</div></div>
-      </div>
-    </div>
+  <!-- 1. Connexion / Login -->
+  <section id="screen-login" class="screen active">
+    <div class="splash-content">
+      <img src="1601.jpg" alt="Logo Institut de la Gombe 2" class="logo-large">
+      <h1 class="school-title">INSTITUT DE LA GOMBE 2</h1>
+      <p style="color:#0d6efd; font-weight:bold;">« PLUS HAUT »</p>
+      <p class="motto">DISCIPLINE – TRAVAIL – JOIE</p>
 
-    <div id="news-feed" style="margin-top:6px;">
-      <p class="empty-note">Chargement des actualités…</p>
+      <form id="login-form" onsubmit="event.preventDefault(); switchScreen('screen-dashboard');">
+        <div class="input-group">
+          <input type="text" placeholder="Nom d'utilisateur / Identifiant" required>
+        </div>
+        <div class="input-group">
+          <input type="password" placeholder="Mot de passe" required>
+        </div>
+        <button type="submit" class="btn-primary">Se connecter</button>
+        <button type="button" class="btn-secondary" onclick="switchScreen('screen-dashboard')">Espace Parent</button>
+      </form>
     </div>
   </section>
 
-  <section id="tab-borne" class="panel hidden">
-    <div class="panel-head">
-      <h2>Borne de classe</h2>
-      <p>Identifiez l'élève par empreinte, puis validez son entrée ou sa sortie.</p>
+  <!-- 2. Dashboard Direction -->
+  <section id="screen-dashboard" class="screen">
+    <h2 style="margin-bottom: 15px;">Bonjour, Directeur</h2>
+    
+    <div class="stats-grid">
+      <div class="stat-card present">
+        <div class="stat-number">482</div>
+        <div style="font-size:11px;">Présents</div>
+      </div>
+      <div class="stat-card absent">
+        <div class="stat-number">12</div>
+        <div style="font-size:11px;">Absents</div>
+      </div>
+      <div class="stat-card late">
+        <div class="stat-number">8</div>
+        <div style="font-size:11px;">En retard</div>
+      </div>
     </div>
 
-    <button class="btn btn-scan" id="btn-identify" onclick="identifyByBiometrics()">
-      <span>Scanner l'empreinte pour identifier</span>
+    <h3 style="margin-bottom:10px;">Accès rapide</h3>
+    <button class="btn-primary" style="margin-bottom:10px;" onclick="switchScreen('screen-students')">Liste des élèves</button>
+    <button class="btn-secondary" onclick="switchScreen('screen-scan')">Module de Pointage</button>
+  </section>
+
+  <!-- 3. Liste Élèves -->
+  <section id="screen-students" class="screen">
+    <h2>Liste des élèves</h2>
+    <div class="input-group" style="margin-top:10px;">
+      <input type="text" placeholder="Rechercher un élève...">
+    </div>
+
+    <div class="student-list">
+      <div class="student-item">
+        <div class="student-info">
+          <div class="avatar"></div>
+          <div>
+            <strong>MUKENDI Christian</strong>
+            <div style="font-size:12px; color:gray;">1ère A</div>
+          </div>
+        </div>
+        <span class="badge badge-present">Présent</span>
+      </div>
+
+      <div class="student-item">
+        <div class="student-info">
+          <div class="avatar"></div>
+          <div>
+            <strong>SIZOLO Ferreol</strong>
+            <div style="font-size:12px; color:gray;">1ère B</div>
+          </div>
+        </div>
+        <span class="badge badge-absent">Absent</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Pointage Biométrique / Badge -->
+  <section id="screen-scan" class="screen">
+    <h2>Pointage des élèves</h2>
+    <div style="text-align:center; padding: 40px 0;">
+      <div style="width:120px; height:120px; border-radius:50%; background:#e0e7ff; display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto; border: 2px dashed #0d6efd;">
+        <span style="font-size:40px;">👆</span>
+      </div>
+      <p>Scannez l'empreinte de l'élève pour enregistrer sa présence.</p>
+      <button class="btn-primary" style="margin-top:20px;" onclick="alert('Pointage confirmé : MUKENDI Christian (07:32)')">Simuler Empreinte</button>
+    </div>
+  </section>
+
+  <!-- Navigation Inférieure -->
+  <nav class="bottom-nav" id="main-nav" style="display:none;">
+    <button class="nav-item active" onclick="switchScreen('screen-dashboard')">
+      <span>🏠</span>
+      <span>Accueil</span>
     </button>
-
-    <div class="btn-grid">
-      <button class="btn btn-entree" id="btn-entree" onclick="processScan('ENTREE')">Entrée</button>
-      <button class="btn btn-sortie" id="btn-sortie" onclick="processScan('SORTIE')">Sortie</button>
-    </div>
-
-    <div id="scan-result" class="result">
-      <div id="scan-title" class="r-title"></div>
-      <div id="scan-message" class="r-msg"></div>
-      <div id="scan-history" class="r-history"></div>
-    </div>
-  </section>
-
-  <section id="tab-famille" class="panel hidden">
-    <div class="panel-head">
-      <h2>Suivre mon enfant</h2>
-      <p>Entrez son nom pour voir s'il est arrivé aujourd'hui, et à quelle heure.</p>
-    </div>
-
-    <div class="search-row">
-      <input type="text" id="famille-search-input" placeholder="Nom de l'enfant" onkeydown="if(event.key==='Enter')searchFamilyStatus()">
-      <button class="btn btn-primary" onclick="searchFamilyStatus()">Voir</button>
-    </div>
-
-    <div id="famille-results" style="margin-top:6px;"></div>
-  </section>
-
-  <section id="tab-discipline" class="panel hidden">
-    <div class="panel-head">
-      <h2>Vie scolaire &amp; discipline</h2>
-      <p>Identifiez un élève par empreinte pour consulter son dossier disciplinaire.</p>
-    </div>
-
-    <button class="btn btn-rose" id="btn-discipline-scan" onclick="identifyForDiscipline()">
-      <span>Scanner l'empreinte de l'élève</span>
+    <button class="nav-item" onclick="switchScreen('screen-students')">
+      <span>👥</span>
+      <span>Élèves</span>
     </button>
+    <button class="nav-item" onclick="switchScreen('screen-scan')">
+      <span>📌</span>
+      <span>Pointage</span>
+    </button>
+  </nav>
 
-    <div id="discipline-result" class="result">
-      <div id="discipline-title" class="r-title"></div>
-      <div id="discipline-message" class="r-msg"></div>
-      <div id="discipline-history" class="r-history"></div>
-    </div>
-  </section>
-
-  <section id="tab-admin" class="panel hidden">
-
-    <div id="admin-login">
-      <div class="panel-head left" style="margin-bottom:14px;">
-        <h2>Accès administrateur</h2>
-        <p>Réservé au personnel autorisé.</p>
-      </div>
-      <div class="field">
-        <label class="field-label">Mot de passe</label>
-        <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
-      </div>
-      <button class="btn btn-primary" onclick="loginAdmin()">Se connecter</button>
-    </div>
-
-    <div id="admin-form" class="hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <h2 style="font-size:1.06rem; color:var(--cathedral);">Espace admin</h2>
-        <span class="badge badge-on">Actif</span>
-      </div>
-
-      <div class="subtab-row">
-        <div class="subtab active" id="asub-inscrire" onclick="showAdminSub('inscrire')">Inscrire</div>
-        <div class="subtab" id="asub-actu" onclick="showAdminSub('actu')">Actualité</div>
-        <div class="subtab" id="asub-discipline" onclick="showAdminSub('discipline')">Incident</div>
-      </div>
-
-      <div id="admin-sub-inscrire">
-        <div class="field">
-          <label class="field-label">Nom complet</label>
-          <input type="text" id="student-name" placeholder="Ex : Manasse Ilunga">
-        </div>
-        <div class="field">
-          <label class="field-label">Classe</label>
-          <input type="text" id="student-class" placeholder="Ex : Ntambwa">
-        </div>
-        <button class="btn btn-gold" id="btn-register" onclick="registerStudentBiometrics()">
-          <span>Placer l'empreinte &amp; enregistrer</span>
-        </button>
-        <div id="admin-status" style="min-height:18px; text-align:center; font-size:0.76rem; margin-top:10px; color:var(--ink-soft);"></div>
-      </div>
-
-      <div id="admin-sub-actu" class="hidden">
-        <div class="field">
-          <label class="field-label">Titre</label>
-          <input type="text" id="news-title" placeholder="Ex : Reprise des cours le 5 octobre">
-        </div>
-        <div class="field">
-          <label class="field-label">Message</label>
-          <textarea id="news-body" placeholder="Détails de l'annonce…"></textarea>
-        </div>
-        <div class="field">
-          <label class="field-label">Signé par</label>
-          <input type="text" id="news-author" placeholder="Ex : Direction de l'école">
-        </div>
-        <button class="btn btn-primary" id="btn-news" onclick="publishNews()">
-          <span>Publier l'actualité</span>
-        </button>
-        <div id="news-status" style="min-height:18px; text-align:center; font-size:0.76rem; margin-top:10px; color:var(--ink-soft);"></div>
-      </div>
-
-      <div id="admin-sub-discipline" class="hidden">
-        <p style="font-size:0.78rem; color:var(--ink-soft); margin:0 0 12px;">Scannez l'empreinte de l'élève concerné pour ouvrir la fiche, puis complétez l'incident.</p>
-        <button class="btn btn-rose" id="btn-discipline-identify" onclick="identifyForNewIncident()">
-          <span>Scanner l'élève concerné</span>
-        </button>
-        <div id="incident-target" class="hidden" style="margin-top:14px;">
-          <div class="field">
-            <label class="field-label">Élève</label>
-            <div id="incident-student-name" style="font-weight:700; color:var(--cathedral); padding:10px 0;"></div>
-          </div>
-          <div class="field">
-            <label class="field-label">Type d'incident</label>
-            <select id="incident-type">
-              <option value="Retard">Retard</option>
-              <option value="Avertissement">Avertissement</option>
-              <option value="Tenue non conforme">Tenue non conforme</option>
-              <option value="Comportement">Comportement</option>
-              <option value="Convocation parents">Convocation des parents</option>
-              <option value="Exclusion temporaire">Exclusion temporaire</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label">Note</label>
-            <textarea id="incident-note" placeholder="Détails de l'incident…"></textarea>
-          </div>
-          <button class="btn btn-rose" id="btn-incident-save" onclick="saveIncident()">
-            <span>Enregistrer l'incident</span>
-          </button>
-        </div>
-        <div id="incident-status" style="min-height:18px; text-align:center; font-size:0.76rem; margin-top:10px; color:var(--ink-soft);"></div>
-      </div>
-
-      <button class="btn btn-danger-outline" style="margin-top:16px;" onclick="logoutAdmin()">Se déconnecter</button>
-    </div>
-  </section>
-
-  <footer class="app-footer">Institut de la Gombe 2 — Plus Haut</footer>
 </div>
 
-<div id="toast-host"></div>
-
-<nav class="tabbar">
-  <div class="bar">
-    <button onclick="showTab('accueil')" id="nav-accueil" class="active">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-7 9 7M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
-      <span class="lbl">Accueil</span>
-    </button>
-    <button onclick="showTab('borne')" id="nav-borne">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11a3 3 0 100-6 3 3 0 000 6zM5 12c0-3.5 3-6 7-6s7 2.5 7 6M4 16c1.5-2 4.5-3 8-3s6.5 1 8 3M8 21c.8-1.5 2.2-2.5 4-2.5s3.2 1 4 2.5"/></svg>
-      <span class="lbl">Présence</span>
-    </button>
-    <button onclick="showTab('famille')" id="nav-famille">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM16 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM2 20c0-3 2.5-5.5 6-5.5S14 17 14 20M12 20c.3-2.4 2-4.3 4.5-4.3S21 17.6 21 20"/></svg>
-      <span class="lbl">Parents</span>
-    </button>
-    <button onclick="showTab('discipline')" id="nav-discipline">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 4h6a1 1 0 011 1v1H8V5a1 1 0 011-1zM6 6h12v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6zM9 11h6M9 15h4"/></svg>
-      <span class="lbl">Discipline</span>
-    </button>
-    <button onclick="showTab('admin')" id="nav-admin">
-      <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 11V8a6 6 0 1112 0v3M5 11h14v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9zM12 15v3"/></svg>
-      <span class="lbl">Admin</span>
-    </button>
-  </div>
-</nav>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+<!-- SCRIPT JAVASCRIPT INTÉGRÉ -->
+<script>
+  // Configuration Firebase
   const firebaseConfig = {
-    apiKey: "AIzaSyDJ8M2hSVuhkGGUD19P8_5ksAaGAc5xRRk",
-    authDomain: "mon123ecole.firebaseapp.com",
-    projectId: "mon123ecole",
-    storageBucket: "mon123ecole.firebasestorage.app",
-    messagingSenderId: "323449218378",
-    appId: "1:323449218378:web:4ff5c63be01886925a4db3"
+    apiKey: "VOTRE_API_KEY",
+    authDomain: "gombe2-app.firebaseapp.com",
+    projectId: "gombe2-app",
+    storageBucket: "gombe2-app.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.db = db;
-  window.fs = { doc, setDoc, getDoc, collection, addDoc, getDocs };
-  window.dispatchEvent(new Event('firebase-ready'));
-</script>
-
-<script>
-  const ADMIN_PASSWORD = "admin1234";
-  let pendingIncidentStudent = null;
-
-  function sanitizeFirebaseId(rawId){
-    return rawId.replace(/\//g, "_").replace(/\+/g, "-").replace(/=/g, "");
-  }
-  function dateKeyOf(d){ return new Date(d).toISOString().slice(0,10); }
-
-  function toast(msg, kind){
-    const host = document.getElementById('toast-host');
-    const el = document.createElement('div');
-    el.className = 'toast';
-    if(kind === 'bad') el.style.borderColor = 'rgba(179,65,65,0.4)';
-    if(kind === 'ok') el.style.borderColor = 'rgba(46,125,84,0.4)';
-    el.textContent = msg;
-    host.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; el.style.transition = 'all .25s ease'; }, 2400);
-    setTimeout(() => el.remove(), 2700);
+  if (firebase.apps.length === 0) {
+    firebase.initializeApp(firebaseConfig);
   }
 
-  function setBusy(btn, busyLabel){
-    if(!btn) return () => {};
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spin"></span><span>${busyLabel}</span>`;
-    return () => { btn.disabled = false; btn.innerHTML = original; };
-  }
-
-  function tickClock(){
-    const now = new Date();
-    document.getElementById('clock-time').textContent = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-    document.getElementById('clock-date').textContent = now.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'short' });
-  }
-  tickClock();
-  setInterval(tickClock, 15000);
-
-  function showTab(tab){
-    ['accueil','borne','famille','discipline','admin'].forEach(t => {
-      document.getElementById(`tab-${t}`).classList.add('hidden');
-      document.getElementById(`nav-${t}`).classList.remove('active');
+  // Enregistrement PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('PWA Service Worker actif'))
+        .catch(err => console.error('Erreur PWA:', err));
     });
-    document.getElementById(`tab-${tab}`).classList.remove('hidden');
-    document.getElementById(`nav-${tab}`).classList.add('active');
-    if(tab === 'accueil') loadNews();
   }
 
-  function showAdminSub(sub){
-    ['inscrire','actu','discipline'].forEach(s => {
-      document.getElementById(`admin-sub-${s}`).classList.add('hidden');
-      document.getElementById(`asub-${s}`).classList.remove('active');
-    });
-    document.getElementById(`admin-sub-${sub}`).classList.remove('hidden');
-    document.getElementById(`asub-${sub}`).classList.add('active');
-  }
+  // Navigation SPA
+  function switchScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
 
-  function loginAdmin(){
-    const pass = document.getElementById('admin-pass').value;
-    if(pass === ADMIN_PASSWORD){
-      document.getElementById('admin-login').classList.add('hidden');
-      document.getElementById('admin-form').classList.remove('hidden');
-      document.getElementById('admin-pass').value = '';
-    } else { toast("Mot de passe administrateur incorrect.", 'bad'); }
-  }
-  function logoutAdmin(){
-    document.getElementById('admin-form').classList.add('hidden');
-    document.getElementById('admin-login').classList.remove('hidden');
-  }
+    const header = document.getElementById('main-header');
+    const nav = document.getElementById('main-nav');
 
-  function showResult(prefix, kind, title, msgHtml, historyHtml){
-    const box = document.getElementById(`${prefix}-result`);
-    box.className = `result show ${kind}`;
-    document.getElementById(`${prefix}-title`).innerText = title;
-    document.getElementById(`${prefix}-message`).innerHTML = msgHtml;
-    document.getElementById(`${prefix}-history`).innerHTML = historyHtml || '';
-  }
-
-  async function loadNews(){
-    const feed = document.getElementById('news-feed');
-    try{
-      const { collection, getDocs } = window.fs;
-      const snap = await getDocs(collection(window.db, "news"));
-      const items = [];
-      snap.forEach(d => items.push(d.data()));
-      items.sort((a,b) => new Date(b.date) - new Date(a.date));
-      if(items.length === 0){ feed.innerHTML = `<p class="empty-note">Aucune actualité publiée pour le moment.</p>`; return; }
-      feed.innerHTML = items.map(n => {
-        const d = new Date(n.date);
-        const dateStr = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
-        return `<div class="news-card"><div class="n-date">${dateStr}</div><h3>${n.title}</h3><p>${n.body}</p>${n.author ? `<div class="n-author">— ${n.author}</div>` : ''}</div>`;
-      }).join('');
-    } catch(err){ console.error(err); feed.innerHTML = `<p class="empty-note">Impossible de charger les actualités.</p>`; }
-  }
-
-  async function registerStudentBiometrics(){
-    const name = document.getElementById('student-name').value.trim();
-    const studentClass = document.getElementById('student-class').value.trim();
-    const status = document.getElementById('admin-status');
-    const btn = document.getElementById('btn-register');
-    if(!name || !studentClass){ toast("Veuillez remplir le nom et la classe.", 'bad'); return; }
-
-    const restore = setBusy(btn, 'Posez le doigt sur le capteur…');
-    status.style.color = 'var(--sky-deep)';
-    status.innerText = "Posez votre doigt sur le capteur d'empreinte…";
-
-    try{
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: challenge,
-          rp: { name: "Institut de la Gombe 2", id: window.location.hostname },
-          user: { id: Uint8Array.from(name, c => c.charCodeAt(0)), name: name, displayName: name },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-          authenticatorSelection: { authenticatorAttachment: "platform" },
-          timeout: 60000
-        }
-      });
-      const rawIdBase64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-      const cleanDocId = sanitizeFirebaseId(rawIdBase64);
-      const { doc, setDoc } = window.fs;
-      await setDoc(doc(window.db, "students", cleanDocId), { name, class: studentClass, registeredAt: new Date().toISOString() });
-
-      status.style.color = '#1E5B3B';
-      status.innerText = `✅ ${name} a été enregistré(e).`;
-      toast(`Élève inscrit : ${name}`, 'ok');
-      document.getElementById('student-name').value = '';
-      document.getElementById('student-class').value = '';
-      setTimeout(() => { status.innerText = ''; }, 3000);
-    } catch(err){
-      console.error(err);
-      status.style.color = '#7E2E2E';
-      status.innerText = "❌ " + (err.message || "L'enregistrement de l'empreinte a échoué.");
-      toast("Échec de l'enregistrement de l'empreinte.", 'bad');
-    } finally { restore(); }
-  }
-
-  async function publishNews(){
-    const title = document.getElementById('news-title').value.trim();
-    const body = document.getElementById('news-body').value.trim();
-    const author = document.getElementById('news-author').value.trim();
-    const status = document.getElementById('news-status');
-    const btn = document.getElementById('btn-news');
-    if(!title || !body){ toast("Titre et message sont requis.", 'bad'); return; }
-
-    const restore = setBusy(btn, 'Publication…');
-    try{
-      const { collection, addDoc } = window.fs;
-      await addDoc(collection(window.db, "news"), { title, body, author, date: new Date().toISOString() });
-      status.style.color = '#1E5B3B';
-      status.innerText = "✅ Actualité publiée.";
-      toast("Actualité publiée sur l'accueil.", 'ok');
-      document.getElementById('news-title').value = '';
-      document.getElementById('news-body').value = '';
-      document.getElementById('news-author').value = '';
-      setTimeout(() => { status.innerText = ''; }, 3000);
-    } catch(err){
-      console.error(err);
-      status.style.color = '#7E2E2E';
-      status.innerText = "❌ Échec de la publication.";
-    } finally { restore(); }
-  }
-
-  async function scanAndFetchStudent(){
-    const challenge = new Uint8Array(32);
-    window.crypto.getRandomValues(challenge);
-    const assertion = await navigator.credentials.get({
-      publicKey: { challenge: challenge, timeout: 60000, userVerification: "required" }
-    });
-    const rawIdBase64 = btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
-    const cleanDocId = sanitizeFirebaseId(rawIdBase64);
-    const { doc, getDoc } = window.fs;
-    const studentDoc = await getDoc(doc(window.db, "students", cleanDocId));
-    if(!studentDoc.exists()) return null;
-    return { id: cleanDocId, data: studentDoc.data() };
-  }
-  async function fetchAttendanceFor(studentId){
-    const { collection, getDocs } = window.fs;
-    const snap = await getDocs(collection(window.db, "attendances"));
-    const rows = [];
-    snap.forEach(d => { const a = d.data(); if(a.studentId === studentId) rows.push(a); });
-    rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-    return rows;
-  }
-  async function fetchDisciplineFor(studentId){
-    const { collection, getDocs } = window.fs;
-    const snap = await getDocs(collection(window.db, "discipline"));
-    const rows = [];
-    snap.forEach(d => { const a = d.data(); if(a.studentId === studentId) rows.push(a); });
-    rows.sort((a,b) => new Date(b.date) - new Date(a.date));
-    return rows;
-  }
-
-  async function identifyByBiometrics(){
-    const btn = document.getElementById('btn-identify');
-    const restore = setBusy(btn, 'Scan en cours…');
-    try{
-      const student = await scanAndFetchStudent();
-      if(student){
-        const rows = await fetchAttendanceFor(student.id);
-        let historyHtml = '<p style="font-weight:700; color:var(--sky-deep); margin:0 0 6px;">Dernières présences</p>';
-        if(rows.length === 0){ historyHtml += '<p style="color:var(--ink-soft);">Aucun pointage récent.</p>'; }
-        else rows.slice(0,5).forEach(att => {
-          const d = new Date(att.timestamp);
-          historyHtml += `<div class="h-row"><span>${att.type} (${d.toLocaleDateString('fr-FR')})</span><b>${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</b></div>`;
-        });
-        showResult('scan', 'info', '👤 Élève identifié',
-          `<div style="font-size:1.05rem; font-weight:700; color:var(--cathedral);">${student.data.name}</div><div style="color:var(--sky-deep); font-size:0.78rem; margin-top:2px;">Classe : ${student.data.class}</div>`,
-          historyHtml);
-      } else { showResult('scan', 'bad', '❌ Élève inconnu', "Aucun élève ne correspond à cette empreinte."); }
-    } catch(err){ console.error(err); showResult('scan', 'muted', '⚠️ Échec du scan', "Empreinte non reconnue ou action annulée."); }
-    finally { restore(); }
-  }
-
-  async function processScan(type){
-    const btn = document.getElementById(type === 'ENTREE' ? 'btn-entree' : 'btn-sortie');
-    const restore = setBusy(btn, 'Scan…');
-    try{
-      const student = await scanAndFetchStudent();
-      if(student){
-        const now = new Date();
-        const { collection, addDoc } = window.fs;
-        await addDoc(collection(window.db, "attendances"), {
-          studentId: student.id, studentName: student.data.name, class: student.data.class,
-          type: type, timestamp: now.toISOString(), dateKey: dateKeyOf(now), dateString: now.toLocaleDateString('fr-FR')
-        });
-        showResult('scan', type === 'ENTREE' ? 'ok' : 'warn',
-          type === 'ENTREE' ? '✅ Entrée validée' : '🟠 Sortie validée',
-          `Élève : <b>${student.data.name}</b> (${student.data.class})<br>Heure : <b>${now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</b>`);
-        toast(`${type === 'ENTREE' ? 'Entrée' : 'Sortie'} enregistrée pour ${student.data.name}`, 'ok');
-      } else { showResult('scan', 'bad', '❌ Élève inconnu', "Cette empreinte n'est pas encore enregistrée."); }
-    } catch(err){ console.error(err); showResult('scan', 'muted', '⚠️ Échec du scan', "Le scan a été annulé."); }
-    finally { restore(); }
-  }
-
-  async function identifyForDiscipline(){
-    const btn = document.getElementById('btn-discipline-scan');
-    const restore = setBusy(btn, 'Scan en cours…');
-    try{
-      const student = await scanAndFetchStudent();
-      if(student){
-        const rows = await fetchDisciplineFor(student.id);
-        let historyHtml = '<p style="font-weight:700; color:var(--rose); margin:0 0 6px;">Dossier disciplinaire</p>';
-        if(rows.length === 0){ historyHtml += '<p style="color:var(--ink-soft);">Aucun incident enregistré. Dossier vierge.</p>'; }
-        else rows.forEach(inc => {
-          const d = new Date(inc.date);
-          historyHtml += `<div class="h-row"><span>${inc.type} (${d.toLocaleDateString('fr-FR')})</span></div>${inc.note ? `<div style="color:var(--ink-soft); font-size:0.68rem; margin:-2px 0 6px;">${inc.note}</div>` : ''}`;
-        });
-        showResult('discipline', rows.length ? 'warn' : 'ok', `👤 ${student.data.name}`,
-          `Classe : <b>${student.data.class}</b> · ${rows.length} incident(s) enregistré(s)`, historyHtml);
-      } else { showResult('discipline', 'bad', '❌ Élève inconnu', "Aucun élève ne correspond à cette empreinte."); }
-    } catch(err){ console.error(err); showResult('discipline', 'muted', '⚠️ Échec du scan', "Empreinte non reconnue ou action annulée."); }
-    finally { restore(); }
-  }
-
-  async function identifyForNewIncident(){
-    const btn = document.getElementById('btn-discipline-identify');
-    const status = document.getElementById('incident-status');
-    const restore = setBusy(btn, 'Scan en cours…');
-    try{
-      const student = await scanAndFetchStudent();
-      if(student){
-        pendingIncidentStudent = student;
-        document.getElementById('incident-student-name').innerText = `${student.data.name} — ${student.data.class}`;
-        document.getElementById('incident-target').classList.remove('hidden');
-        status.style.color = 'var(--ink-soft)';
-        status.innerText = '';
-      } else {
-        pendingIncidentStudent = null;
-        document.getElementById('incident-target').classList.add('hidden');
-        status.style.color = '#7E2E2E';
-        status.innerText = "❌ Élève inconnu — inscrivez-le d'abord.";
-      }
-    } catch(err){ console.error(err); status.style.color = '#7E2E2E'; status.innerText = "⚠️ Scan annulé."; }
-    finally { restore(); }
-  }
-
-  async function saveIncident(){
-    if(!pendingIncidentStudent){ toast("Scannez d'abord un élève.", 'bad'); return; }
-    const type = document.getElementById('incident-type').value;
-    const note = document.getElementById('incident-note').value.trim();
-    const status = document.getElementById('incident-status');
-    const btn = document.getElementById('btn-incident-save');
-
-    const restore = setBusy(btn, 'Enregistrement…');
-    try{
-      const { collection, addDoc } = window.fs;
-      await addDoc(collection(window.db, "discipline"), {
-        studentId: pendingIncidentStudent.id, studentName: pendingIncidentStudent.data.name,
-        class: pendingIncidentStudent.data.class, type, note, date: new Date().toISOString()
-      });
-      status.style.color = '#1E5B3B';
-      status.innerText = `✅ Incident enregistré pour ${pendingIncidentStudent.data.name}.`;
-      toast("Incident disciplinaire enregistré.", 'ok');
-      document.getElementById('incident-note').value = '';
-      document.getElementById('incident-target').classList.add('hidden');
-      pendingIncidentStudent = null;
-      setTimeout(() => { status.innerText = ''; }, 3000);
-    } catch(err){ console.error(err); status.style.color = '#7E2E2E'; status.innerText = "❌ Échec de l'enregistrement."; }
-    finally { restore(); }
-  }
-
-  async function searchFamilyStatus(){
-    const searchName = document.getElementById('famille-search-input').value.trim().toLowerCase();
-    const resultsDiv = document.getElementById('famille-results');
-    if(!searchName){ toast("Entrez le nom de l'enfant.", 'bad'); return; }
-    resultsDiv.innerHTML = `<p class="empty-note">Recherche en cours…</p>`;
-
-    try{
-      const { collection, getDocs } = window.fs;
-      const snap = await getDocs(collection(window.db, "attendances"));
-      const rows = [];
-      snap.forEach(d => {
-        const item = d.data();
-        if(item.studentName && item.studentName.toLowerCase().includes(searchName)) rows.push(item);
-      });
-
-      if(rows.length === 0){
-        resultsDiv.innerHTML = `<p class="empty-note">Aucun enregistrement trouvé pour cet enfant.</p>`;
-        return;
-      }
-
-      rows.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-      const todayKey = dateKeyOf(new Date());
-      const todayRows = rows.filter(r => (r.dateKey || dateKeyOf(r.timestamp)) === todayKey);
-
-      const student = { name: rows[0].studentName, class: rows[0].class };
-      let statusClass = 'status-absent', stateLabel = "Pas encore arrivé aujourd'hui", timeLabel = '—', noteLabel = '';
-
-      if(todayRows.length > 0){
-        const last = todayRows[0];
-        const d = new Date(last.timestamp);
-        timeLabel = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-        if(last.type === 'ENTREE'){ statusClass = 'status-present'; stateLabel = "À l'école — entré à"; }
-        else { statusClass = 'status-left'; stateLabel = "Reparti — sorti à"; }
-        const entreesToday = todayRows.filter(r => r.type === 'ENTREE').length;
-        const sortiesToday = todayRows.filter(r => r.type === 'SORTIE').length;
-        noteLabel = `${entreesToday} entrée(s) · ${sortiesToday} sortie(s) aujourd'hui`;
-      }
-
-      let html = `
-        <div class="status-card ${statusClass}">
-          <div class="s-name">${student.name}</div>
-          <div class="s-class">${student.class}</div>
-          <div class="s-state">${stateLabel}</div>
-          <div class="s-time">${timeLabel}</div>
-          ${noteLabel ? `<div class="s-note">${noteLabel}</div>` : ''}
-        </div>`;
-
-      const pastRows = rows.filter(r => (r.dateKey || dateKeyOf(r.timestamp)) !== todayKey).slice(0, 8);
-      if(pastRows.length > 0){
-        html += `<p style="font-size:0.7rem; font-weight:700; color:var(--ink-soft); margin:16px 0 8px;">Historique récent</p>`;
-        html += pastRows.map(item => {
-          const d = new Date(item.timestamp);
-          const isEntree = item.type === 'ENTREE';
-          return `<div class="srow ${isEntree ? 'pill-entree' : 'pill-sortie'}">
-              <div><div class="when">Le ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div></div>
-              <span class="stat ${isEntree ? 'stat-entree' : 'stat-sortie'}">${item.type}</span>
-            </div>`;
-        }).join('');
-      }
-
-      resultsDiv.innerHTML = html;
-    } catch(err){
-      console.error(err);
-      resultsDiv.innerHTML = `<p class="empty-note" style="color:#7E2E2E;">Erreur de recherche.</p>`;
+    if (screenId === 'screen-login') {
+      header.style.display = 'none';
+      nav.style.display = 'none';
+    } else {
+      header.style.display = 'flex';
+      nav.style.display = 'flex';
     }
   }
-
-  window.showTab = showTab;
-  window.showAdminSub = showAdminSub;
-  window.loginAdmin = loginAdmin;
-  window.logoutAdmin = logoutAdmin;
-  window.registerStudentBiometrics = registerStudentBiometrics;
-  window.publishNews = publishNews;
-  window.identifyByBiometrics = identifyByBiometrics;
-  window.processScan = processScan;
-  window.identifyForDiscipline = identifyForDiscipline;
-  window.identifyForNewIncident = identifyForNewIncident;
-  window.saveIncident = saveIncident;
-  window.searchFamilyStatus = searchFamilyStatus;
-
-  loadNews();
-
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW non enregistré :', err));
-    });
-  }
 </script>
+
 </body>
 </html>
